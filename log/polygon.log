@@ -1,0 +1,289 @@
+DEBUG:root:This message should go to the log file
+INFO:__main__:Starting program
+INFO:__main__:Starting program
+INFO:__main__:Starting program
+INFO:__main__:Parsing config file
+2015-01-28 15:01:26,409 - __main__ - INFO - Starting program
+2015-01-28 15:01:26,411 - __main__ - INFO - Parsing config file
+2015-01-29 10:52:29,018 - __main__ - INFO - Starting program
+2015-01-29 10:52:29,045 - __main__ - INFO - Parsing config file
+2015-01-29 10:59:03,147 - __main__ - INFO - Starting program
+2015-01-29 10:59:03,162 - __main__ - INFO - Parsing config file
+2015-01-29 11:01:59,520 - __main__ - INFO - Starting program
+2015-01-29 11:01:59,521 - __main__ - INFO - Parsing config file
+2015-01-29 11:04:27,023 - __main__ - INFO - Starting program
+2015-01-29 11:04:27,025 - __main__ - INFO - Parsing config file
+2015-01-29 11:06:42,957 - __main__ - INFO - Starting program
+2015-01-29 11:06:42,959 - __main__ - INFO - Parsing config file
+2015-02-02 14:55:42,803 - __main__ - INFO - Starting program
+2015-02-02 14:55:42,845 - __main__ - INFO - Parsing config file
+2015-02-02 14:57:35,108 - __main__ - INFO - Starting program
+2015-02-02 14:57:35,109 - __main__ - INFO - Parsing config file
+2015-02-02 15:08:28,532 - __main__ - INFO - Starting program
+2015-02-02 15:08:28,534 - __main__ - INFO - Parsing config file
+2015-02-02 15:32:51,240 - __main__ - INFO - Starting program
+2015-02-02 15:32:51,241 - __main__ - INFO - Parsing config file
+2015-02-02 15:34:52,314 - __main__ - INFO - Starting program
+2015-02-02 15:34:52,315 - __main__ - INFO - Parsing config file
+2015-02-02 15:34:57,343 - __main__ - INFO - Starting program
+2015-02-02 15:34:57,344 - __main__ - INFO - Parsing config file
+2015-02-02 15:38:34,291 - __main__ - INFO - Starting program
+2015-02-02 15:38:34,292 - __main__ - INFO - Parsing config file
+2015-02-02 15:39:23,812 - __main__ - INFO - Starting program
+2015-02-02 15:39:23,814 - __main__ - INFO - Parsing config file
+2015-02-02 15:39:28,865 - __main__ - INFO - Starting program
+2015-02-02 15:39:28,866 - __main__ - INFO - Parsing config file
+2015-02-02 15:39:38,251 - __main__ - INFO - Starting program
+2015-02-02 15:39:38,253 - __main__ - INFO - Parsing config file
+2015-02-02 15:39:48,870 - __main__ - INFO - Starting program
+2015-02-02 15:39:48,871 - __main__ - INFO - Parsing config file
+2015-02-02 15:54:17,466 - __main__ - INFO - Starting program
+2015-02-02 15:54:17,468 - __main__ - INFO - Parsing config file
+2015-02-02 16:01:46,925 - __main__ - INFO - Starting program
+2015-02-02 16:01:46,926 - __main__ - INFO - Parsing config file
+2015-02-03 10:16:38,777 - __main__ - INFO - Starting program
+2015-02-03 10:16:38,779 - __main__ - INFO - Parsing config file
+2015-02-03 10:25:23,492 - __main__ - INFO - Starting program
+2015-02-03 10:25:23,493 - __main__ - INFO - Parsing config file
+2015-02-03 10:30:11,925 - __main__ - INFO - Starting program
+2015-02-03 10:30:11,926 - __main__ - INFO - Parsing config file
+2015-02-03 10:30:17,780 - __main__ - INFO - Starting program
+2015-02-03 10:30:17,781 - __main__ - INFO - Parsing config file
+2015-02-03 13:30:14,556 - __main__ - INFO - Starting program
+2015-02-03 13:30:14,559 - __main__ - INFO - Parsing config file
+2015-02-03 13:31:05,634 - __main__ - INFO - Starting program
+2015-02-03 13:31:05,636 - __main__ - INFO - Parsing config file
+2015-02-03 14:00:45,303 - __main__ - INFO - Starting program
+2015-02-03 14:00:45,304 - __main__ - INFO - Parsing config file
+2015-02-03 14:00:56,728 - __main__ - INFO - Starting program
+2015-02-03 14:00:56,729 - __main__ - INFO - Parsing config file
+2015-02-03 14:01:14,828 - __main__ - INFO - Starting program
+2015-02-03 14:01:14,829 - __main__ - INFO - Parsing config file
+2015-02-03 14:01:44,742 - __main__ - INFO - Starting program
+2015-02-03 14:01:44,743 - __main__ - INFO - Parsing config file
+2015-02-03 14:02:24,356 - __main__ - INFO - Starting program
+2015-02-03 14:02:24,357 - __main__ - INFO - Parsing config file
+2015-02-03 14:04:29,082 - __main__ - INFO - Starting program
+2015-02-03 14:04:29,084 - __main__ - INFO - Parsing config file
+2015-02-03 14:05:55,711 - __main__ - INFO - Starting program
+2015-02-03 14:05:55,712 - __main__ - INFO - Parsing config file
+2015-02-03 14:18:05,887 - __main__ - INFO - Starting program
+2015-02-03 14:18:05,888 - __main__ - INFO - Parsing config file
+2015-02-03 14:20:48,020 - __main__ - INFO - Starting program
+2015-02-03 14:20:48,021 - __main__ - INFO - Parsing config file
+2015-02-03 14:22:37,893 - __main__ - INFO - Starting program
+2015-02-03 14:22:37,894 - __main__ - INFO - Parsing config file
+2015-02-03 14:26:12,081 - __main__ - INFO - Starting program
+2015-02-03 14:26:12,082 - __main__ - INFO - Parsing config file
+2015-02-03 14:28:05,430 - __main__ - INFO - Starting program
+2015-02-03 14:28:05,431 - __main__ - INFO - Parsing config file
+2015-02-03 14:45:46,211 - __main__ - INFO - Starting program
+2015-02-03 14:45:46,213 - __main__ - INFO - Parsing config file
+2015-02-03 14:55:07,434 - __main__ - INFO - Starting program
+2015-02-03 14:55:07,435 - __main__ - INFO - Parsing config file
+2015-02-03 14:55:24,584 - __main__ - INFO - Starting program
+2015-02-03 14:55:24,585 - __main__ - INFO - Parsing config file
+2015-02-03 14:55:43,832 - __main__ - INFO - Starting program
+2015-02-03 14:55:43,833 - __main__ - INFO - Parsing config file
+2015-02-03 15:26:03,861 - __main__ - INFO - Starting program
+2015-02-03 15:26:03,862 - __main__ - INFO - Parsing config file
+2015-02-03 15:28:13,028 - __main__ - INFO - Starting program
+2015-02-03 15:28:13,029 - __main__ - INFO - Parsing config file
+2015-02-03 15:33:53,517 - __main__ - INFO - Starting program
+2015-02-03 15:33:53,519 - __main__ - INFO - Parsing config file
+2015-02-03 15:35:08,472 - __main__ - INFO - Starting program
+2015-02-03 15:35:08,473 - __main__ - INFO - Parsing config file
+2015-02-03 15:35:48,991 - __main__ - INFO - Starting program
+2015-02-03 15:35:48,992 - __main__ - INFO - Parsing config file
+2015-02-03 15:37:50,191 - __main__ - INFO - Starting program
+2015-02-03 15:37:50,192 - __main__ - INFO - Parsing config file
+2015-02-03 15:39:38,216 - __main__ - INFO - Starting program
+2015-02-03 15:39:38,218 - __main__ - INFO - Parsing config file
+2015-02-03 15:40:04,855 - __main__ - INFO - Starting program
+2015-02-03 15:40:04,857 - __main__ - INFO - Parsing config file
+2015-02-03 15:41:02,516 - __main__ - INFO - Starting program
+2015-02-03 15:41:02,517 - __main__ - INFO - Parsing config file
+2015-02-03 15:41:27,499 - __main__ - INFO - Starting program
+2015-02-03 15:41:27,500 - __main__ - INFO - Parsing config file
+2015-02-03 15:45:29,683 - __main__ - INFO - Starting program
+2015-02-03 15:45:29,684 - __main__ - INFO - Parsing config file
+2015-02-03 15:45:56,443 - __main__ - INFO - Starting program
+2015-02-03 15:45:56,444 - __main__ - INFO - Parsing config file
+2015-02-03 15:48:45,114 - __main__ - INFO - Starting program
+2015-02-03 15:48:45,115 - __main__ - INFO - Parsing config file
+2015-02-03 15:57:34,630 - __main__ - INFO - Starting program
+2015-02-03 15:57:34,631 - __main__ - INFO - Parsing config file
+2015-02-03 15:57:42,533 - __main__ - INFO - Starting program
+2015-02-03 15:57:42,534 - __main__ - INFO - Parsing config file
+2015-02-03 15:59:14,085 - __main__ - INFO - Starting program
+2015-02-03 15:59:14,087 - __main__ - INFO - Parsing config file
+2015-02-04 09:32:32,505 - __main__ - INFO - Starting program
+2015-02-04 09:32:32,513 - __main__ - INFO - Parsing config file
+2015-02-04 09:54:15,858 - __main__ - INFO - Starting program
+2015-02-04 09:54:15,859 - __main__ - INFO - Parsing config file
+2015-02-04 09:54:49,245 - __main__ - INFO - Starting program
+2015-02-04 09:54:49,247 - __main__ - INFO - Parsing config file
+2015-02-04 10:02:08,637 - __main__ - INFO - Starting program
+2015-02-04 10:02:08,638 - __main__ - INFO - Parsing config file
+2015-02-04 10:14:01,891 - __main__ - INFO - Starting program
+2015-02-04 10:14:01,893 - __main__ - INFO - Parsing config file
+2015-02-04 11:22:01,085 - __main__ - INFO - Starting program
+2015-02-04 11:22:01,086 - __main__ - INFO - Parsing config file
+2015-02-04 11:35:58,378 - __main__ - INFO - Starting program
+2015-02-04 11:35:58,380 - __main__ - INFO - Parsing config file
+2015-02-04 11:36:35,396 - __main__ - INFO - Starting program
+2015-02-04 11:36:35,398 - __main__ - INFO - Parsing config file
+2015-02-04 11:50:05,614 - __main__ - INFO - Starting program
+2015-02-04 11:50:05,615 - __main__ - INFO - Parsing config file
+2015-02-04 11:56:28,829 - __main__ - INFO - Starting program
+2015-02-04 11:56:28,831 - __main__ - INFO - Parsing config file
+2015-02-04 11:56:45,621 - __main__ - INFO - Starting program
+2015-02-04 11:56:45,622 - __main__ - INFO - Parsing config file
+2015-02-04 11:57:27,943 - __main__ - INFO - Starting program
+2015-02-04 11:57:27,945 - __main__ - INFO - Parsing config file
+2015-02-04 12:28:05,554 - __main__ - INFO - Starting program
+2015-02-04 12:28:05,556 - __main__ - INFO - Parsing config file
+2015-02-04 12:45:13,184 - __main__ - INFO - Starting program
+2015-02-04 12:45:13,185 - __main__ - INFO - Parsing config file
+2015-02-04 13:28:10,222 - __main__ - INFO - Starting program
+2015-02-04 13:28:10,223 - __main__ - INFO - Parsing config file
+2015-02-04 13:29:03,493 - __main__ - INFO - Starting program
+2015-02-04 13:29:03,494 - __main__ - INFO - Parsing config file
+2015-02-04 13:36:20,251 - __main__ - INFO - Starting program
+2015-02-04 13:36:20,252 - __main__ - INFO - Parsing config file
+2015-02-04 13:36:27,282 - __main__ - INFO - Starting program
+2015-02-04 13:36:27,283 - __main__ - INFO - Parsing config file
+2015-02-04 13:38:27,011 - __main__ - INFO - Starting program
+2015-02-04 13:38:27,012 - __main__ - INFO - Parsing config file
+2015-02-04 13:38:41,660 - __main__ - INFO - Starting program
+2015-02-04 13:38:41,661 - __main__ - INFO - Parsing config file
+2015-02-04 13:39:12,365 - __main__ - INFO - Starting program
+2015-02-04 13:39:12,367 - __main__ - INFO - Parsing config file
+2015-02-04 13:39:17,455 - __main__ - INFO - Starting program
+2015-02-04 13:39:17,456 - __main__ - INFO - Parsing config file
+2015-02-04 13:43:11,815 - __main__ - INFO - Starting program
+2015-02-04 13:43:11,816 - __main__ - INFO - Parsing config file
+2015-02-04 13:44:56,382 - __main__ - INFO - Starting program
+2015-02-04 13:44:56,384 - __main__ - INFO - Parsing config file
+2015-02-04 13:59:10,193 - __main__ - INFO - Starting program
+2015-02-04 13:59:10,195 - __main__ - INFO - Parsing config file
+2015-02-04 13:59:18,131 - __main__ - INFO - Starting program
+2015-02-04 13:59:18,132 - __main__ - INFO - Parsing config file
+2015-02-04 14:06:14,791 - __main__ - INFO - Starting program
+2015-02-04 14:06:14,792 - __main__ - INFO - Parsing config file
+2015-02-04 14:06:52,376 - __main__ - INFO - Starting program
+2015-02-04 14:06:52,378 - __main__ - INFO - Parsing config file
+2015-02-04 14:08:25,423 - __main__ - INFO - Starting program
+2015-02-04 14:08:25,424 - __main__ - INFO - Parsing config file
+2015-02-04 14:22:41,360 - __main__ - INFO - Starting program
+2015-02-04 14:22:41,362 - __main__ - INFO - Parsing config file
+2015-02-05 10:20:24,079 - __main__ - INFO - Starting program
+2015-02-05 10:20:24,081 - __main__ - INFO - Parsing config file
+2015-02-05 10:24:57,130 - __main__ - INFO - Starting program
+2015-02-05 10:24:57,131 - __main__ - INFO - Parsing config file
+2015-02-05 10:27:20,386 - __main__ - INFO - Starting program
+2015-02-05 10:27:20,387 - __main__ - INFO - Parsing config file
+2015-02-05 10:30:06,146 - __main__ - INFO - Starting program
+2015-02-05 10:30:06,147 - __main__ - INFO - Parsing config file
+2015-02-05 10:33:47,156 - __main__ - INFO - Starting program
+2015-02-05 10:33:47,157 - __main__ - INFO - Parsing config file
+2015-02-05 10:36:23,733 - __main__ - INFO - Starting program
+2015-02-05 10:36:23,735 - __main__ - INFO - Parsing config file
+2015-02-05 10:37:10,468 - __main__ - INFO - Starting program
+2015-02-05 10:37:10,469 - __main__ - INFO - Parsing config file
+2015-02-05 10:37:27,044 - __main__ - INFO - Starting program
+2015-02-05 10:37:27,046 - __main__ - INFO - Parsing config file
+2015-02-05 11:46:32,767 - __main__ - INFO - Starting program
+2015-02-05 11:46:32,768 - __main__ - INFO - Parsing config file
+2015-02-05 11:46:44,935 - __main__ - INFO - Starting program
+2015-02-05 11:46:44,936 - __main__ - INFO - Parsing config file
+2015-02-05 11:47:12,716 - __main__ - INFO - Starting program
+2015-02-05 11:47:12,717 - __main__ - INFO - Parsing config file
+2015-02-05 11:47:19,292 - __main__ - INFO - Starting program
+2015-02-05 11:47:19,293 - __main__ - INFO - Parsing config file
+2015-02-05 11:47:30,932 - __main__ - INFO - Starting program
+2015-02-05 11:47:30,933 - __main__ - INFO - Parsing config file
+2015-02-05 11:47:47,718 - __main__ - INFO - Starting program
+2015-02-05 11:47:47,719 - __main__ - INFO - Parsing config file
+2015-02-05 11:47:53,556 - __main__ - INFO - Starting program
+2015-02-05 11:47:53,557 - __main__ - INFO - Parsing config file
+2015-02-05 11:49:22,973 - __main__ - INFO - Starting program
+2015-02-05 11:49:22,975 - __main__ - INFO - Parsing config file
+2015-02-05 11:49:36,547 - __main__ - INFO - Starting program
+2015-02-05 11:49:36,548 - __main__ - INFO - Parsing config file
+2015-02-05 11:49:55,439 - __main__ - INFO - Starting program
+2015-02-05 11:49:55,440 - __main__ - INFO - Parsing config file
+2015-02-05 11:50:04,106 - __main__ - INFO - Starting program
+2015-02-05 11:50:04,108 - __main__ - INFO - Parsing config file
+2015-02-05 12:11:00,786 - __main__ - INFO - Starting program
+2015-02-05 12:11:00,788 - __main__ - INFO - Parsing config file
+2015-02-05 12:18:11,829 - __main__ - INFO - Starting program
+2015-02-05 12:18:11,830 - __main__ - INFO - Parsing config file
+2015-02-05 12:18:35,056 - __main__ - INFO - Starting program
+2015-02-05 12:18:35,057 - __main__ - INFO - Parsing config file
+2015-02-05 12:19:00,912 - __main__ - INFO - Starting program
+2015-02-05 12:19:00,914 - __main__ - INFO - Parsing config file
+2015-02-05 12:22:57,812 - __main__ - INFO - Starting program
+2015-02-05 12:22:57,813 - __main__ - INFO - Parsing config file
+2015-02-05 12:26:43,616 - __main__ - INFO - Starting program
+2015-02-05 12:26:43,618 - __main__ - INFO - Parsing config file
+2015-02-05 12:27:03,707 - __main__ - INFO - Starting program
+2015-02-05 12:27:03,709 - __main__ - INFO - Parsing config file
+2015-02-05 12:37:37,650 - __main__ - INFO - Starting program
+2015-02-05 12:37:37,652 - __main__ - INFO - Parsing config file
+2015-02-05 12:38:13,724 - __main__ - INFO - Starting program
+2015-02-05 12:38:13,725 - __main__ - INFO - Parsing config file
+2015-02-05 12:40:08,373 - __main__ - INFO - Starting program
+2015-02-05 12:40:08,375 - __main__ - INFO - Parsing config file
+2015-02-05 12:41:21,391 - __main__ - INFO - Starting program
+2015-02-05 12:41:21,392 - __main__ - INFO - Parsing config file
+2015-02-05 12:56:21,342 - __main__ - INFO - Starting program
+2015-02-05 12:56:21,344 - __main__ - INFO - Parsing config file
+2015-02-05 12:56:35,277 - __main__ - INFO - Starting program
+2015-02-05 12:56:35,278 - __main__ - INFO - Parsing config file
+2015-02-05 13:04:14,468 - __main__ - INFO - Starting program
+2015-02-05 13:04:14,469 - __main__ - INFO - Parsing config file
+2015-02-05 13:08:23,539 - __main__ - INFO - Starting program
+2015-02-05 13:08:23,541 - __main__ - INFO - Parsing config file
+2015-02-05 13:09:58,711 - __main__ - INFO - Starting program
+2015-02-05 13:09:58,712 - __main__ - INFO - Parsing config file
+2015-02-05 13:10:32,216 - __main__ - INFO - Starting program
+2015-02-05 13:10:32,217 - __main__ - INFO - Parsing config file
+2015-02-06 09:18:32,018 - __main__ - INFO - Starting program
+2015-02-06 09:18:32,030 - __main__ - INFO - Parsing config file
+2015-02-06 09:19:51,262 - __main__ - INFO - Starting program
+2015-02-06 09:19:51,263 - __main__ - INFO - Parsing config file
+2015-02-06 09:19:59,576 - __main__ - INFO - Starting program
+2015-02-06 09:19:59,577 - __main__ - INFO - Parsing config file
+2015-02-06 09:20:12,415 - __main__ - INFO - Starting program
+2015-02-06 09:20:12,417 - __main__ - INFO - Parsing config file
+2015-02-06 09:28:59,876 - __main__ - INFO - Starting program
+2015-02-06 09:28:59,878 - __main__ - INFO - Parsing config file
+2015-02-06 09:45:57,728 - __main__ - INFO - Starting program
+2015-02-06 09:45:57,730 - __main__ - INFO - Parsing config file
+2015-02-06 09:55:10,608 - __main__ - INFO - Starting program
+2015-02-06 09:55:10,610 - __main__ - INFO - Parsing config file
+2015-02-06 09:55:20,060 - __main__ - INFO - Starting program
+2015-02-06 09:55:20,061 - __main__ - INFO - Parsing config file
+2015-02-06 09:55:47,614 - __main__ - INFO - Starting program
+2015-02-06 09:55:47,616 - __main__ - INFO - Parsing config file
+2015-02-06 09:57:47,457 - __main__ - INFO - Starting program
+2015-02-06 09:57:47,459 - __main__ - INFO - Parsing config file
+2015-02-06 09:58:03,260 - __main__ - INFO - Starting program
+2015-02-06 09:58:03,262 - __main__ - INFO - Parsing config file
+2015-02-06 11:02:28,020 - __main__ - INFO - Starting program
+2015-02-06 11:02:28,022 - __main__ - INFO - Parsing config file
+2015-02-06 11:08:22,316 - __main__ - INFO - Starting program
+2015-02-06 11:08:22,318 - __main__ - INFO - Parsing config file
+2015-02-06 11:37:33,370 - __main__ - INFO - Starting program
+2015-02-06 11:37:33,371 - __main__ - INFO - Parsing config file
+2015-02-06 11:38:24,907 - __main__ - INFO - Starting program
+2015-02-06 11:38:24,908 - __main__ - INFO - Parsing config file
+2015-02-06 11:38:49,641 - __main__ - INFO - Starting program
+2015-02-06 11:38:49,642 - __main__ - INFO - Parsing config file
+2015-02-06 11:45:57,788 - __main__ - INFO - Starting program
+2015-02-06 11:45:57,789 - __main__ - INFO - Parsing config file
+2015-02-06 11:46:30,175 - __main__ - INFO - Starting program
+2015-02-06 11:46:30,176 - __main__ - INFO - Parsing config file
+2015-02-06 11:48:31,516 - __main__ - INFO - Starting program
+2015-02-06 11:48:31,517 - __main__ - INFO - Parsing config file
