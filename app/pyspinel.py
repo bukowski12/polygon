@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## This file is part of pyspinel.
 
 ## pyspinel is free software: you can redistribute it and/or modify
@@ -71,11 +72,12 @@ class Device(object):
 		#self.socket = create_connection((ip,port)) #connect the socket to the device and store the returned default socket object
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		#self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+		#self.socket.settimeout(5)
 		self.socket.connect((ip, port))
 
 	def disconnect(self):
-		"""Class representing a device that communicates through the Spinel 97 protocol"""
-		self.socket.shutdown(1)
+		self.socket.shutdown(2)
 		self.socket.close()
 
 	def query(self, instruction, parameters='', address=universal_address, receive=True):
@@ -125,11 +127,12 @@ class Device(object):
 		SUM = abs(SUM % 256)
 		#while SUM < 0: #simulate byte overrun
 		#	SUM += 256 #must be 1B size
-		packet = struct.pack('>2Bh3B', PRE, FRM, num, address, self.current_sig, instruction) + parameters
+		packet = struct.pack('>2BH3B', PRE, FRM, num, address, self.current_sig, instruction) + parameters
 		packet += struct.pack('2B', SUM, CR)
 		self.socket.send(packet)
 		if log:
-			log_file.write(packet + "\n")
+			#log_file.write(packet + "\n")
+			log_file.write(packet)
 		if address == broadcast_address or not receive: #broadcast address, no response should be received OR we don't want to receive anything
 			return None
 		else: #should get a response
@@ -168,7 +171,7 @@ class Device(object):
 		pre, frm, num, address, sig, ack = struct.unpack('>2BH3B', packet)
 		packet = self.socket.recv(num)
 		if log:
-			log_file.write(packet + "\n")
+			log_file.write(packet)
 		data = packet[:-2] #without SUM and CR 
 		if check_packet_structure:
 			cr = packet[-1]

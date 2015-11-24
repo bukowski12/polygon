@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #Python device communications protocol framework (pydcpf)
-#Copyright (C) 2013  Ondřej Grover
+#Copyright (C) 2013  Ondrej Grover
 #
 #pydcpf is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ _outputs_inputs_count_fmts = {
 	1 : 'B',
 	2 : 'H',
 	4 : '>I',
+	13: '<QLB'
 	}
 
 
@@ -46,10 +47,16 @@ class Device(pyspinel.Device):
 			only for max 32 inputs/outputs
 		"""
 		data_len = len(data)
-		fmt = _outputs_inputs_count_fmts[data_len]
-		state = [ bool(int(i)) for i in
-			  ("%0" + "%ii" % 8**data_len) % int(bin(struct.unpack_from(fmt, data)[0])[2:]) # crunch down to padded binary string representation
-			  ]
+		state = []
+		if data_len==13: #for 100 inputs
+			for j in range(0,13):
+				byte = [bool(int(i)) for i in ("%0" + "%ii" % 8) % int(bin(struct.unpack_from('B', data,j)[0])[2:])]
+				state.extend(byte)
+		else:
+			fmt = _outputs_inputs_count_fmts[data_len]
+			state = [ bool(int(i)) for i in
+				  ("%0" + "%ii" % 8**data_len) % int(bin(struct.unpack_from(fmt, data)[0])[2:]) # crunch down to padded binary string representation
+			  	]
 		state.reverse()        # reverse in place as specified in docs
 		return state
 
@@ -152,4 +159,10 @@ class Device(pyspinel.Device):
 		to get the status of all outputs first anyways,
 		so it's more resourceful to batch output querying
 		"""
-		return self.get_inputs_state()[intput_number - 1] # list indexed from 0        
+		return self.get_inputs_state()[intput_number - 1] # list indexed from 0     
+
+	def invertState(self, output):
+		if self.get_output_state(output) == True:
+			self.set_output_off(output)
+		else:
+			self.set_output_on(output)
