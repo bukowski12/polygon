@@ -38,14 +38,13 @@ class Ui_Kamery(object):
 	def setupUi(self, Kamery):
 		#self.setWindowFlags(QtCore.Qt.Window)
 		Kamery.setObjectName(_fromUtf8("Kamery"))
-		Kamery.resize(1200, 900)
+		Kamery.resize(3*352, 3*290)
 		Kamery.setWindowFlags(QtCore.Qt.Window)
+		# disable (but not hide) close button
+		Kamery.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
 		self.camWindow = QtGui.QLabel(Kamery)
 		self.camWindow.setGeometry(QtCore.QRect(0, 0, 3*352, 3*290))
-		#self.camWindow.setFrameShape(QtGui.QFrame.StyledPanel)
-		#self.camWindow.setFrameShadow(QtGui.QFrame.Raised)
 		self.camWindow.setObjectName(_fromUtf8("camWindow"))
-
 		self.retranslateUi(Kamery)
 		QtCore.QMetaObject.connectSlotsByName(Kamery)
                                                                                                                                                                                                                                                              
@@ -54,12 +53,14 @@ class Ui_Kamery(object):
 
 
 class Grab(QtCore.QThread):
-	def __init__(self, idcam, url, user=None, password=None, parent = None):
+	def __init__(self, idcam, url, width, height, user=None, password=None, parent = None):
 		QtCore.QThread.__init__(self, parent)
 		self.idcam = idcam
 		self.url = url
 		self.user = user
 		self.password = password
+		self.width = width
+		self.height = height
 		self.start()
 
 	def run(self):
@@ -69,25 +70,31 @@ class Grab(QtCore.QThread):
 		self.device = cv2.VideoCapture()
 		try:
 			ret = self.device.open(self.url)
-			frame = self.get_frame()
+			frame = self.getFrame()
 		except Exception,e:
 			print str(e)
-			frame = np.full((288,352,3),(0,0,153),dtype=np.uint8)
-			cv2.putText(frame, 'NO SIGNAL', (0,10), cv2.FONT_HERSHEY_PLAIN, 1,(255,0,255))
+			frame = self.blueDeath()
 		self.emit (QtCore.SIGNAL("output(PyQt_PyObject, PyQt_PyObject)"), self.idcam, frame)
 
-	def get_frame(self):
+	def getFrame(self):
 		ret,frame = self.device.read()
 		if ret==False:
-			frame = np.full((288,352,3),(0,0,153),dtype=np.uint8)
+			frame = self.blueDeath()
+		return frame
+
+	def blueDeath(self):
+		frame = np.full((self.height,self.width,3),(153,0,0),dtype=np.uint8)
+		cv2.putText(frame, 'NO SIGNAL', (10,50), cv2.FONT_HERSHEY_PLAIN, 2,(255,0,255),4)
 		return frame
 
 class CamMatrix(QtCore.QThread):
-	def __init__(self, urls, user=None, password=None, parent = None):
+	def __init__(self, urls, width, height, user=None, password=None, parent = None):
 		QtCore.QThread.__init__(self, parent)
 		self.urls = urls
 		self.user = user
 		self.password = password
+		self.width = width
+		self.height = height
 		self.start()
 	
 	def run(self):
@@ -99,7 +106,7 @@ class CamMatrix(QtCore.QThread):
 		while (True):
 			self.graber = [None]*len(self.urls)
 			for i,url in enumerate(self.urls):
-				self.graber[i] = Grab(i, url, self.user, self.password)
+				self.graber[i] = Grab(i, url, self.width, self.height, self.user, self.password)
 				self.connect (self.graber[i],QtCore.SIGNAL("output(PyQt_PyObject, PyQt_PyObject)"), self.insertImage)
 			for i,url in enumerate(self.urls):
 				self.graber[i].wait(1000)
@@ -112,29 +119,14 @@ class CamMatrix(QtCore.QThread):
 			self.emit(QtCore.SIGNAL("output(QImage)"), image)
 
 	def insertImage (self, idcam, frame):
-		#cv2.putText(frame, 'Kamera: %d .' % idcam, (0,10), cv2.FONT_HERSHEY_PLAIN, 1,(255,0,255))
-		#del self.img[idcam]
-		#self.img.insert(idcam, np.array(frame))
 		self.img[idcam] = np.array(frame)
 
-		#camGrid = self.combineImages(img, i)
-		#print "mam cely"
-		#camGrid = np.asarray(camGrid[:,:])
-		#cv2.imshow('cam',camGrid)
-		#height, width, bytes_per_component = camGrid.shape
-		#bytes_per_line = bytes_per_component * width
-		#image = QImage(camGrid.data, width, height, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-		#self.emit(QtCore.SIGNAL("output(QImage)"), image)
-
 	def createArray(self):
-		w,h=352,288
-		img = np.full((288,352,3),(0,0,153),dtype=np.uint8)
+		img = np.full((self.height,self.width,3),(153,0,0),dtype=np.uint8)
 		imgArray = []
 		for i in self.countCam:
 			imgArray.append(img)
 		return (imgArray)
-
-
 
 	#def combineImages(*args):
 	#	numImages = 0
@@ -151,8 +143,8 @@ class CamMatrix(QtCore.QThread):
 		# whether or not the images fit (though they won't be scaled).
 		#colWidth = max(imageArray, key=attrgetter('width')).width
 		#rowHeight = max(imageArray, key=attrgetter('height')).height
-		colWidth = 352
-		rowHeight = 288
+		colWidth = self.width
+		rowHeight = self.height
 		# Square-root of the number of images will tell us how big the
 		# sides of the square need to be. Ceiled to ensure they always
 		# all fit.
@@ -170,7 +162,6 @@ class CamMatrix(QtCore.QThread):
 			row = int(math.ceil(index / grid))
 			column = index % grid
 			height, width, channels  = img.shape
-			#cv2.putText(img, "TESThg", (0,10), cv2.FONT_HERSHEY_PLAIN, 1,(255,0,255))
 			img2 = cv2.cv.fromarray(img)
 			cv2.cv.SetImageROI(combinedImage, (column*colWidth, row*rowHeight, width, height))
 			cv2.cv.Copy(img2, combinedImage)
@@ -180,10 +171,10 @@ class CamMatrix(QtCore.QThread):
 
 
 class Camera(QtGui.QWidget, Ui_Kamery):
-	def __init__(self, urls, user=None, password=None, parent = None):
+	def __init__(self, urls, width, height, user=None, password=None, parent = None):
 		super(Camera, self).__init__(parent)
 		self.setupUi(self)
-		self.worker = CamMatrix(urls, user, password)
+		self.worker = CamMatrix(urls, width, height, user, password)
 		self.show()
 		self.is_recording = False
 		self.connect(self.worker, QtCore.SIGNAL("output(QImage)"), self.display)

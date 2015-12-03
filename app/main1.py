@@ -58,11 +58,13 @@ if __name__ == '__main__':
 	#i = a.get_inputs_state()
 	#o = a.get_outputs_state()
 	#i = a.get_input_state(1)
+	o = a.get_outputs_state()
+	print o
 	i = a.get_output_state(20)
 	print i
-	#a.invertState(1)
+	a.invertState(1)
 	#sleep(1)
-	#i = a.get_output_state(2)
+	i = a.get_output_state(20)
 	#sleep (1)
 	#print i
 	a.set_output_on(20)

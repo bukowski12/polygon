@@ -16,6 +16,7 @@
 
 """Spinel 97 binary protocol implementation"""
 
+import sys
 import socket #for socket communication
 import struct #for binary data packing
 from random import randint #for sig generation
@@ -69,13 +70,16 @@ class Device(object):
 			number of the port used for communication
 			defaults to 10001 (UDP)
 		"""
-		#self.socket = create_connection((ip,port)) #connect the socket to the device and store the returned default socket object
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		#self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-		#self.socket.settimeout(5)
-		self.socket.connect((ip, port))
-
+		try:
+			#self.socket = create_connection((ip,port)) #connect the socket to the device and store the returned default socket object
+			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+			#self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+			#self.socket.settimeout(5)
+			self.socket.connect((ip, port))
+		except socket.error as err:
+			print "socket creation failed with error %s" %(err)
+	
 	def disconnect(self):
 		self.socket.shutdown(2)
 		self.socket.close()
@@ -129,7 +133,11 @@ class Device(object):
 		#	SUM += 256 #must be 1B size
 		packet = struct.pack('>2BH3B', PRE, FRM, num, address, self.current_sig, instruction) + parameters
 		packet += struct.pack('2B', SUM, CR)
-		self.socket.send(packet)
+		try:
+			self.socket.send(packet)
+		except socket.error, e:
+			print "Error sending data: %s" % e
+			#sys.exit(1)
 		if log:
 			#log_file.write(packet + "\n")
 			log_file.write(packet)
@@ -169,7 +177,11 @@ class Device(object):
 		if log:
 			log_file.write(packet)
 		pre, frm, num, address, sig, ack = struct.unpack('>2BH3B', packet)
-		packet = self.socket.recv(num)
+		try:
+			packet = self.socket.recv(num)
+		except socket.error, e:
+		    print "Error receiving data: %s" % e
+    		#sys.exit(1)
 		if log:
 			log_file.write(packet)
 		data = packet[:-2] #without SUM and CR 

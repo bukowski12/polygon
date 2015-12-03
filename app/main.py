@@ -8,11 +8,12 @@ from quido import Device as kvido
 from camera import Camera
 from PyQt4 import QtCore, QtGui, QtSql, QtWebKit
 import time
+from audio import Audio
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 __appname__ = "polygon"
 __conffile__ = "../config/polygon.conf"
 __log_filename__ = "../log/polygon.log"
@@ -29,31 +30,48 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.query = QtSql.QSqlQuery()
 		self.assignWidgets()
 		self.reader = QtCore.QTimer()
-		self.reader.setInterval(500)
+		self.reader.setInterval(400)
 		self.reader.timeout.connect(self.readInput)
 		self.reader.start()
-		#self.readRelays()
+		self.runningTraining = False
 		self.show()
 		cams = [conf['CAMERA']['cam1'], conf['CAMERA']['cam2'],conf['CAMERA']['cam3'],conf['CAMERA']['cam4'],conf['CAMERA']['cam5'],conf['CAMERA']['cam6'],conf['CAMERA']['cam7'],conf['CAMERA']['cam8'],conf['CAMERA']['cam9']]
 		#bcams = [conf['CAMERA']['cam1'], conf['CAMERA']['cam2']]
-		self.cam = Camera(cams, conf['CAMERA']['user'], conf['CAMERA']['password'],self)
+		self.cam = Camera(cams, int(conf['CAMERA']['width']), int(conf['CAMERA']['height']), conf['CAMERA']['user'], conf['CAMERA']['password'], self)
+		self.audio = Audio(conf['AUDIO']['file'],self)
+		self.sound = False
 		
-
 	def readInput(self):
 		self.readRelays()
 		qin = kvido(conf['QUIDO']['din'])
 		states = qin.get_inputs_state()
-		for butt in conf['QUIDO_IN']:
-			relay = int(conf['QUIDO_IN'][butt])
+		for floor in conf['QUIDO_IN']:
+			relay = int(conf['QUIDO_IN'][floor])
 			state = states[relay]
-			name = QtCore.QString(butt)
+			name = QtCore.QString(floor)
 			label = self.tabPolygon.findChild(QtGui.QLabel,name)
 			if state == True:
-				label.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255); border: 1px solid gray;")
+					label.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); border: 1px solid gray;")
 			else:
-				label.setStyleSheet("background: transparent; color: rgb(0, 0, 0); border: 1px solid gray;")
+				if self.runningTraining:
+					label.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255); border: 1px solid gray;")
+				else:
+					label.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(255, 255, 255); border: 1px solid gray;")
 		qin.disconnect()
 
+	def readRelays(self):
+		qout = kvido(conf['QUIDO']['dout'])
+		states = qout.get_outputs_state()
+		for butt in conf['QUIDO_OUT']:
+			relay = int(conf['QUIDO_OUT'][butt])
+			state = states[relay-1]
+			name = QtCore.QString("%1Button").arg(butt)
+			button = self.tabPolygon.findChild(QtGui.QPushButton,name)
+			if state:
+				button.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255)")	
+			else:
+				button.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0)")
+		qout.disconnect()
 
 	def assignWidgets(self):
 		self.statusbar.showMessage("Version: %s"%__version__)
@@ -97,6 +115,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.controlRoomLightButton.clicked.connect(lambda:self.clickButton(int(conf['QUIDO_OUT']['controlRoomLight'])))
 		self.helpLightButton.clicked.connect(lambda:self.clickButton(int(conf['QUIDO_OUT']['helpLight'])))
 
+		self.pushButton_19.clicked.connect(self.playSound)
+		self.pushButton_19.setIcon(QtGui.QIcon('../files/play-icon.png'))
+
 		self.startButton.clicked.connect(self.startStopwatch)		
 		self.stopButton.clicked.connect(self.stopStopwatch)
 		self.emergencyButton.clicked.connect(self.emergency)
@@ -112,23 +133,23 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.printTrainingButton.clicked.connect(self.printTrainingProtocol)
 
 	def emergency(self):
-		qout = kvido(conf['QUIDO']['dout'])
-		qout.set_output_off(int(conf['QUIDO_OUT']['fan12']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['fan34']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['fanControlRoom']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['glow']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['strobo']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['hotZone']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['louver']))
-		qout.set_output_off(int(conf['QUIDO_OUT']['smoke']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['polygonLight1']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['polygonLight2']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['polygonLight3']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['hotZoneLight']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['stressRoomLight']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['controlRoomLight']))
-		qout.set_output_on(int(conf['QUIDO_OUT']['helpLight']))
-		qout.disconnect()
+		#qout = kvido(conf['QUIDO']['dout'])
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['fan12']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['fan34']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['fanControlRoom']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['glow']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['strobo']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['hotZone']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['louver']))
+		self.qout.set_output_off(int(conf['QUIDO_OUT']['smoke']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['polygonLight1']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['polygonLight2']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['polygonLight3']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['hotZoneLight']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['stressRoomLight']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['controlRoomLight']))
+		self.qout.set_output_on(int(conf['QUIDO_OUT']['helpLight']))
+		#qout.disconnect()
 		time.sleep(0.3)
 		self.readRelays()
 
@@ -140,9 +161,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		#print self.trainingmodel.lastError().text()
 		self.query.exec_("UPDATE training SET status=2 WHERE status=1")
 		self.timer.stop()
+		self.runningTraining = False
 
 
 	def startStopwatch(self):
+		self.runningTraining = True
 		self.startButton.setEnabled(False)
 		self.stopButton.setEnabled(True)
 		self.timer = QtCore.QTimer()
@@ -159,19 +182,15 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.racetime = QtCore.QString("%1:%2").arg(m, 2, 10, QtCore.QChar('0')).arg(s, 2, 10, QtCore.QChar('0'))
 		self.lcdNumber.display(self.racetime)
 
-	def readRelays(self):
-		qout = kvido(conf['QUIDO']['dout'])
-		states = qout.get_outputs_state()
-		for butt in conf['QUIDO_OUT']:
-			relay = int(conf['QUIDO_OUT'][butt])
-			state = states[relay-1]
-			name = QtCore.QString("%1Button").arg(butt)
-			button = self.tabPolygon.findChild(QtGui.QPushButton,name)
-			if state:
-				button.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255)")	
-			else:
-				button.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0)")
-		qout.disconnect()
+	def playSound(self):
+		if self.sound:
+			self.audio.stop()
+			self.sound = False
+			self.pushButton_19.setIcon(QtGui.QIcon('../files/play-icon.png'))
+		else:
+			self.sound = True
+			self.audio.play()
+			self.pushButton_19.setIcon(QtGui.QIcon('../files/pause-icon.png'))
 
 	def clickButton(self,relay):
 		qout = kvido(conf['QUIDO']['dout'])
@@ -204,6 +223,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		if not message:
 			self.query.exec_("UPDATE training SET status=10 WHERE status=2")
 			self.membermodel.refresh(trainingid)
+			self.finishedtrainingmodel.select()
 			self.lcdNumber.display("00:00")
 		else:
 			message = set(message)
