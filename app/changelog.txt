@@ -1,0 +1,15 @@
+#1.0.0		08.2024
+	- nove AD
+	- python 3
+	- Qt 5
+	
+#0.0.9#		09.2021
+	- LDAP prepsan na AD
+
+
+#0.0.8#		11.12.2017
+	- opraveny jednotky tlaku
+
+#0.0.7#		7.12.2017
+	-	opraveno spousteni zvuku (cesta k souboru)
+	- zmenen dialog na doplneni hodnot u clena jednotky

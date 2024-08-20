@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
-
-from PyQt4 import QtCore, QtGui, QtSql
+from PyQt5 import QtCore, QtSql
 
 class personModel(QtSql.QSqlTableModel):
 	def __init__(self):
 		super(personModel, self).__init__()
-		self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
+		#self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
+		self.setEditStrategy(QtSql.QSqlTableModel.OnManualSubmit)
 		self.setTable("person")
 		self.setFilter("valid=1")
+		self.setSort(2, QtCore.Qt.AscendingOrder)
 		self.select()
 		self.setHeaderData(1, QtCore.Qt.Horizontal, u"Jméno")
 		self.setHeaderData(2, QtCore.Qt.Horizontal, u"Příjmení")
@@ -32,7 +32,6 @@ class memberModel(QtSql.QSqlQueryModel):
 			self.setHeaderData(2, QtCore.Qt.Horizontal, u"Objem lahve")
 			self.setHeaderData(3, QtCore.Qt.Horizontal, u"Tlak na začátku")
 			self.setHeaderData(4, QtCore.Qt.Horizontal, u"Tlak na konci")
-			print self.lastError().text()
 
 	def delete(self, idMember):
 		query.exec_("DELETE FROM member WHERE idMember=%d" % (idMember))
@@ -44,16 +43,31 @@ class memberModel(QtSql.QSqlQueryModel):
 
 
 class trainingModel(QtSql.QSqlTableModel):
-	def __init__(self, finished = False):
+	def __init__(self):
 		super(trainingModel, self).__init__()
 		self.setTable("training")
-		if finished == True:
-			self.setFilter("status=10")
-			self.setHeaderData(1, QtCore.Qt.Horizontal, u"Datum")
-			self.setHeaderData(2, QtCore.Qt.Horizontal, u"Čas vstupu do klece")
-			self.setHeaderData(3, QtCore.Qt.Horizontal, u"Čas ukončení")
-			#self.setHeaderData(4, QtCore.Qt.Horizontal, u"Tlak na konci")
-		else:
-			self.setEditStrategy(QtSql.QSqlTableModel.OnManualSubmit)
-			self.setFilter("status=0 OR status=1")
+		self.setEditStrategy(QtSql.QSqlTableModel.OnManualSubmit)
+		self.setFilter("status=0 OR status=1 OR status=2")
 		self.select()
+
+
+class finishedTrainingModel(QtSql.QSqlQueryModel):
+	def __init__(self):
+		super(finishedTrainingModel, self).__init__()
+		self.view()
+
+	def view(self):
+		self.setQuery("SELECT idTraining, time_start, DATE_FORMAT(time_cage, '%i:%s'), DATE_FORMAT(time_end, '%i:%s'), GROUP_CONCAT(CONCAT(person.name,' ', UPPER(person.surname))SEPARATOR '; ') AS names, status FROM training "
+						"LEFT JOIN member ON member.training_id = training.idTraining "
+						"LEFT JOIN person ON member.person_id = person.idPerson "
+						"WHERE status=10 "
+						"GROUP BY training.idTraining "
+						"ORDER BY time_start DESC")
+		self.setHeaderData(1, QtCore.Qt.Horizontal, u"Datum výcviku")
+		self.setHeaderData(2, QtCore.Qt.Horizontal, u"Čas vstupu do klece")
+		self.setHeaderData(3, QtCore.Qt.Horizontal, u"Čas ukončení")
+		self.setHeaderData(4, QtCore.Qt.Horizontal, u"Členové družstva")
+		self.sort (1, QtCore.Qt.DescendingOrder);
+
+	def refresh(self):
+		self.view()

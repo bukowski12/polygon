@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ## This file is part of pyspinel.
 
 ## pyspinel is free software: you can redistribute it and/or modify
@@ -23,7 +22,7 @@ from random import randint #for sig generation
 
 check_checksums = True #calculate checksums for received packets
 check_packet_structure = True #check received packets for the right mask
-log = True
+log = False
 
 ################################################################
 ####                   PROTOCOL SPECIFICATION               ####
@@ -75,16 +74,16 @@ class Device(object):
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			#self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-			#self.socket.settimeout(5)
+			#self.socket.settimeout(3)
 			self.socket.connect((ip, port))
 		except socket.error as err:
-			print "socket creation failed with error %s" %(err)
+			print ("Socket creation failed with error: ", err)
 	
 	def disconnect(self):
 		self.socket.shutdown(2)
 		self.socket.close()
 
-	def query(self, instruction, parameters='', address=universal_address, receive=True):
+	def query(self, instruction, parameters=b'', address=universal_address, receive=True):
 		"""query(instruction[, parameters[, address[, receive]]])
 
 		Query the module for a response with the given instruction, possibly with additional instruction parameters.
@@ -123,11 +122,12 @@ class Device(object):
 		------
 		the same Errors as :func:`receive` and also ValueError on unexpected ADR, provided the response will be received
 		"""
+		#hex_instruction = bytes.fromhex(str(instruction))
 		num = 5 + len(parameters) #ADR+SIG+INST+SUM+CR+ DATA
 		self.current_sig = randint(0, 255) #packet signature
 		SUM = 255 - (139 + num + address +self.current_sig + instruction) #97 + 42 (*) = 139
 		for param in parameters:
-			SUM -= ord(param)
+			SUM -= param
 		SUM = abs(SUM % 256)
 		#while SUM < 0: #simulate byte overrun
 		#	SUM += 256 #must be 1B size
@@ -135,12 +135,12 @@ class Device(object):
 		packet += struct.pack('2B', SUM, CR)
 		try:
 			self.socket.send(packet)
-		except socket.error, e:
-			print "Error sending data: %s" % e
+		except socket.error as e:
+			print ("Error sending data: %s") % e
 			#sys.exit(1)
 		if log:
 			#log_file.write(packet + "\n")
-			log_file.write(packet)
+			log_file.write(packet.decode())
 		if address == broadcast_address or not receive: #broadcast address, no response should be received OR we don't want to receive anything
 			return None
 		else: #should get a response
@@ -179,8 +179,8 @@ class Device(object):
 		pre, frm, num, address, sig, ack = struct.unpack('>2BH3B', packet)
 		try:
 			packet = self.socket.recv(num)
-		except socket.error, e:
-		    print "Error receiving data: %s" % e
+		except socket.error as e:
+		    print ("Error receiving data: %s") % e
     		#sys.exit(1)
 		if log:
 			log_file.write(packet)
@@ -191,8 +191,8 @@ class Device(object):
 				raise ValueError("Wrong packet prefix PRE, expected " + str(PRE) + " got " + str(pre))
 			if frm != FRM:
 				raise ValueError("Wrong packet format FRM, expected " + str(FRM) + " got " + str(frm))
-			if cr != chr(CR):
-				raise ValueError("Wrong packet ending character CR, expected " + str(CR) + " , got " + cr)
+			if cr != CR:
+				raise ValueError("Wrong packet ending character CR, expected " + str(CR) + " , got " + str(cr))
 		if sig != self.current_sig:
 			raise ValueError("Wrong packet signature SIG, expected " + str(self.current_sig) + " , got " + str(sig))
 		if ack != 0:
@@ -201,14 +201,13 @@ class Device(object):
 			SUM = packet[-2]
 			SUM2 = 255 - (139 + num + address + sig + ack)
 			for dat in data:
-				SUM2 -= ord(dat)
+				SUM2 -= dat
 			SUM2 = abs(SUM2 % 256)
-			SUM2 = chr(SUM2)
 			if SUM2 != SUM:
-				raise ValueError("Wrong packet checksum SUM, expected " + SUM2 + " , got " + SUM)
+				raise ValueError("Wrong packet checksum SUM, expected " + SUM2 + " , got " + str(SUM))
 		return address, data
 
-	def instruct(self, instruction, parameters='', address=universal_address):
+	def instruct(self, instruction, parameters=b'', address=universal_address):
 		"""instruct(instruction, [parameters[, address]])
 		
 		Instruct the module specified by its address with the given instruction, possibly with additional instruction parameters.

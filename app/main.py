@@ -1,102 +1,146 @@
-# -*- coding: utf-8 -*-
-
 import sys
+import os
 import configparser
-from model import personModel, memberModel, trainingModel
+from model import personModel, memberModel, trainingModel, finishedTrainingModel
 from ui_mainwindow import Ui_MainWindow, PersonForm, MemberForm
+from ui_loginForm import Ui_Login_Dialog
+from protocol import createProtocol
 from quido import Device as kvido
 from camera import Camera
-from PyQt4 import QtCore, QtGui, QtSql, QtWebKit
+from ldap_auth import LdapAuth
+from PyQt5 import QtCore, QtGui, QtSql
+from PyQt5.QtWidgets import QMainWindow, QAbstractItemView, QMessageBox, QDialog, QApplication, QHeaderView, QPushButton, QLabel
 import time
 from audio import Audio
+import requests
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
-__version__ = "0.0.4"
+__APP_DIR__ = os.path.dirname(__file__)
+__version__ = "1.0.1"
 __appname__ = "polygon"
-__conffile__ = "../config/polygon.conf"
-__log_filename__ = "../log/polygon.log"
+__conffile__ = os.path.join(__APP_DIR__, "../config/polygon.conf")
+__log_filename__ = os.path.join(__APP_DIR__, "../log/polygon.log")
+__VIDEO_FOLDER__ = os.path.join(__APP_DIR__, "../video")
 
 
-class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow):
 	def __init__(self):
-		super(MainWindow, self).__init__()
+		#super(MainWindow, self).__init__()
+		super(self.__class__, self).__init__()
 		self.setupUi(self)
 		self.personmodel = personModel()
 		self.trainingmodel = trainingModel()
 		self.membermodel = memberModel()
-		self.finishedtrainingmodel = trainingModel(True)
+		self.finishedtrainingmodel = finishedTrainingModel()
+		self.qin_status = QLabel(f" QUIDO Input {conf['QUIDO']['din']} - status: Error")
+		self.qout_status = QLabel(f" QUIDO Output {conf['QUIDO']['dout']} - status: Error")
 		self.query = QtSql.QSqlQuery()
 		self.assignWidgets()
 		self.reader = QtCore.QTimer()
-		self.reader.setInterval(400)
+		self.reader.setInterval(600)
 		self.reader.timeout.connect(self.readInput)
 		self.reader.start()
 		self.runningTraining = False
 		self.show()
-		cams = [conf['CAMERA']['cam1'], conf['CAMERA']['cam2'],conf['CAMERA']['cam3'],conf['CAMERA']['cam4'],conf['CAMERA']['cam5'],conf['CAMERA']['cam6'],conf['CAMERA']['cam7'],conf['CAMERA']['cam8'],conf['CAMERA']['cam9']]
-		#bcams = [conf['CAMERA']['cam1'], conf['CAMERA']['cam2']]
-		self.cam = Camera(cams, int(conf['CAMERA']['width']), int(conf['CAMERA']['height']), conf['CAMERA']['user'], conf['CAMERA']['password'], self)
-		self.audio = Audio(conf['AUDIO']['file'],self)
+		#cams = [conf['CAMERA']['cam1'], conf['CAMERA']['cam2'],conf['CAMERA']['cam3'],conf['CAMERA']['cam10'],conf['CAMERA']['cam11']]
+		cams = [conf['CAMERA']['cam1'], conf['CAMERA']['cam2'],conf['CAMERA']['cam3'],conf['CAMERA']['cam4'],conf['CAMERA']['cam5'],conf['CAMERA']['cam6'],conf['CAMERA']['cam7'],conf['CAMERA']['cam8'],conf['CAMERA']['cam9'],conf['CAMERA']['cam10'],conf['CAMERA']['cam11']]
+		if conf['CAMERA']['disable'] is not True:
+			self.cam = Camera(cams, int(conf['CAMERA']['width']), int(conf['CAMERA']['height']), conf['CAMERA']['user'], conf['CAMERA']['password'], self)
+			self.cam.setWindowIcon(QtGui.QIcon(os.path.join(__APP_DIR__, '../files/video.png')))
+		self.audio = Audio(os.path.join(__APP_DIR__, conf['AUDIO']['file']),self)
 		self.sound = False
+
+	def test_Quido(self, ip):
+		try:
+			r = requests.get('http://' + ip, timeout = 0.5)
+		except Exception as e:
+			print (e)
+			return(False)
+		return(True)
 		
 	def readInput(self):
 		self.readRelays()
-		qin = kvido(conf['QUIDO']['din'])
-		states = qin.get_inputs_state()
-		for floor in conf['QUIDO_IN']:
-			relay = int(conf['QUIDO_IN'][floor])
-			state = states[relay]
-			name = QtCore.QString(floor)
-			label = self.tabPolygon.findChild(QtGui.QLabel,name)
-			if state == True:
-					label.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); border: 1px solid gray;")
-			else:
-				if self.runningTraining:
-					label.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255); border: 1px solid gray;")
+		if self.test_Quido(conf['QUIDO']['din']):
+			self.qin_status.setText (f" QUIDO Input {conf['QUIDO']['din']} - status: OK ")
+			self.qin_status.setStyleSheet("background-color: green;")
+			qin = kvido(conf['QUIDO']['din'])
+			states = qin.get_inputs_state()
+			for floor in conf['QUIDO_IN']:
+				relay = int(conf['QUIDO_IN'][floor])
+				state = states[relay]
+				name = floor
+				label = self.tabPolygon.findChild(QLabel,name)
+				if state == True:
+						label.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); border: 1px solid gray;")
 				else:
-					label.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(255, 255, 255); border: 1px solid gray;")
-		qin.disconnect()
-
+					if self.runningTraining:
+						label.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255); border: 1px solid gray;")
+						if relay == 1:
+							self.enterCage()
+					else:
+						label.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(255, 255, 255); border: 1px solid gray;")
+			qin.disconnect()
+		else:
+			self.qin_status.setText (f" QUIDO Input {conf['QUIDO']['din']} - status: Error ")
+			self.qin_status.setStyleSheet("background-color: red;")
+			
 	def readRelays(self):
-		qout = kvido(conf['QUIDO']['dout'])
-		states = qout.get_outputs_state()
-		for butt in conf['QUIDO_OUT']:
-			relay = int(conf['QUIDO_OUT'][butt])
-			state = states[relay-1]
-			name = QtCore.QString("%1Button").arg(butt)
-			button = self.tabPolygon.findChild(QtGui.QPushButton,name)
-			if state:
-				button.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255)")	
-			else:
-				button.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0)")
-		qout.disconnect()
-
+		if self.test_Quido(conf['QUIDO']['dout']):
+			self.qout_status.setText (f" QUIDO Output {conf['QUIDO']['dout']} - status: OK ")
+			self.qout_status.setStyleSheet("background-color: green;")
+			qout = kvido(conf['QUIDO']['dout'])
+			states = qout.get_outputs_state()
+			for butt in conf['QUIDO_OUT']:
+				relay = int(conf['QUIDO_OUT'][butt])
+				state = states[relay-1]
+				name = (butt + "Button")
+				button = self.tabPolygon.findChild(QPushButton,name)
+				if state:
+					button.setStyleSheet("background-color: rgb(92, 184, 92); color: rgb(255, 255, 255)")
+				else:
+					button.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0)")
+			qout.disconnect()
+		else:
+			self.qout_status.setText (f" QUIDO Output {conf['QUIDO']['dout']} - status: Error ")
+			self.qout_status.setStyleSheet("background-color: red;")
+		
 	def assignWidgets(self):
-		self.statusbar.showMessage("Version: %s"%__version__)
-		#self.actionExit.triggered.connect(self.close)
-
-		self.proxy = QtGui.QSortFilterProxyModel(self)
+		self.statusbar.addPermanentWidget(self.qin_status)
+		self.statusbar.addPermanentWidget(self.qout_status)
+		self.statusbar.showMessage(u"Version: %s       Přihlášený uživatel: %s"% (__version__, LA.getDisplayName()))
+		self.proxy = QtCore.QSortFilterProxyModel(self)
 		self.proxy.setSourceModel(self.personmodel)
-
 		self.personTableView.setModel(self.proxy)
 		self.personTableView.hideColumn(0)
 		self.personTableView.hideColumn(6)
+		self.personTableView.resizeColumnsToContents()
+		self.personTableView.setAlternatingRowColors(True)
+		self.personTableView.setStyleSheet("color:Black; alternate-background-color: #DDD; background-color: #EEE; selection-color: black; selection-background-color:#add4fb");
+		self.personTableView.setShowGrid(False)
+		self.personTableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+		self.personTableView.setEditTriggers(QAbstractItemView.NoEditTriggers)
+		self.personTableView.setSortingEnabled(True)
+		self.personTableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 		self.memberTableView.setModel(self.membermodel)
 		self.memberTableView.hideColumn(0)
+		self.memberTableView.resizeColumnsToContents()
+		self.memberTableView.setAlternatingRowColors(True)
+		self.memberTableView.setStyleSheet("color:Black; alternate-background-color: #DDD; background-color: #EEE; selection-color: black; selection-background-color:#add4fb");
+		self.memberTableView.setShowGrid(False)
+		self.memberTableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+		self.memberTableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 		self.trainingTableView.setModel(self.finishedtrainingmodel)
-		#self.trainingTableView.setVisible(False)
-		#self.trainingTableView.resizeColumnsToContents()
-		#self.trainingTableView.setVisible(True)
-		self.trainingTableView.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+		self.trainingTableView.resizeColumnsToContents()
+		self.trainingTableView.setEditTriggers(QAbstractItemView.NoEditTriggers)
 		self.trainingTableView.hideColumn(0)
-		self.trainingTableView.hideColumn(4)
-		#self.trainingTableView.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+		self.trainingTableView.hideColumn(5)
+		self.trainingTableView.setAlternatingRowColors(True)
+		self.trainingTableView.setStyleSheet("color:Black; alternate-background-color: #DDD; background-color: #EEE; selection-color: black; selection-background-color:#add4fb");
+		self.trainingTableView.setShowGrid(False)
+		self.trainingTableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+		self.trainingTableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 		self.startButton.setEnabled(False)
 		self.stopButton.setEnabled(False)
 		self.lcdNumber.display("00:00")
-
 
 		self.fan12Button.clicked.connect(lambda:self.clickButton(int(conf['QUIDO_OUT']['fan12'])))
 		self.fan34Button.clicked.connect(lambda:self.clickButton(int(conf['QUIDO_OUT']['fan34'])))
@@ -116,15 +160,21 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.helpLightButton.clicked.connect(lambda:self.clickButton(int(conf['QUIDO_OUT']['helpLight'])))
 
 		self.pushButton_19.clicked.connect(self.playSound)
-		self.pushButton_19.setIcon(QtGui.QIcon('../files/play-icon.png'))
+		self.pushButton_19.setIcon(QtGui.QIcon(os.path.join(__APP_DIR__, '../files/play-icon.png')))
+		self.volumeSlider.setRange(0, 100)
+		#self.volumeSlider.setFixedWidth(100)
+		self.volumeSlider.setValue(80)
+		#self.connect(self.volumeSlider, QtCore.SIGNAL("valueChanged(int)"), self.setVolume)
+		self.volumeSlider.valueChanged.connect(self.setVolume)
 
-		self.startButton.clicked.connect(self.startStopwatch)		
+		self.startButton.clicked.connect(self.startStopwatch)
 		self.stopButton.clicked.connect(self.stopStopwatch)
 		self.emergencyButton.clicked.connect(self.emergency)
 
 		self.searchPersonLineEdit.textChanged.connect(self.on_lineEdit_textChanged)
 		self.delPersonButton.clicked.connect(self.delPerson)
 		self.addPersonButton.clicked.connect(self.addPerson)
+		self.editPersonButton.clicked.connect(self.editPerson)
 		self.addMemberButton.clicked.connect(self.addMember)
 		self.delMemberButton.clicked.connect(self.delMember)
 		self.updateMemberButton.clicked.connect(self.updateMember)
@@ -133,7 +183,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.printTrainingButton.clicked.connect(self.printTrainingProtocol)
 
 	def emergency(self):
-		#qout = kvido(conf['QUIDO']['dout'])
+		qout = kvido(conf['QUIDO']['dout'])
 		self.qout.set_output_off(int(conf['QUIDO_OUT']['fan12']))
 		self.qout.set_output_off(int(conf['QUIDO_OUT']['fan34']))
 		self.qout.set_output_off(int(conf['QUIDO_OUT']['fanControlRoom']))
@@ -149,9 +199,12 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.qout.set_output_on(int(conf['QUIDO_OUT']['stressRoomLight']))
 		self.qout.set_output_on(int(conf['QUIDO_OUT']['controlRoomLight']))
 		self.qout.set_output_on(int(conf['QUIDO_OUT']['helpLight']))
-		#qout.disconnect()
+		qout.disconnect()
 		time.sleep(0.3)
 		self.readRelays()
+
+	def enterCage(self):
+		self.query.exec_("UPDATE training SET time_cage=IF(time_cage = '00:00:00' OR time_cage IS NULL, '%s', time_cage) WHERE status=1" % (self.racetime))
 
 	def stopStopwatch(self):
 		self.stopButton.setEnabled(False)
@@ -162,35 +215,43 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 		self.query.exec_("UPDATE training SET status=2 WHERE status=1")
 		self.timer.stop()
 		self.runningTraining = False
-
+		self.cam.stopRecord()
+		self.cam.setWindowIcon(QtGui.QIcon(os.path.join(__APP_DIR__, '../files/video.png')))
 
 	def startStopwatch(self):
 		self.runningTraining = True
+		self.cam.startRecord(__VIDEO_FOLDER__)
+		self.cam.setWindowIcon(QtGui.QIcon(os.path.join(__APP_DIR__, '../files/video-recording.png')))
 		self.startButton.setEnabled(False)
 		self.stopButton.setEnabled(True)
 		self.timer = QtCore.QTimer()
 		self.timer.setInterval(1000)
 		self.timer.timeout.connect(self.displayTime)
-		self.time = QtCore.QTime()
+		self.time = QtCore.QElapsedTimer()
 		self.time.start()
 		self.timer.start()
 
 	def displayTime(self):
 		msec = self.time.elapsed()
-		s = msec / 1000 % 60
-		m = msec / 1000 / 60 % 60
-		self.racetime = QtCore.QString("%1:%2").arg(m, 2, 10, QtCore.QChar('0')).arg(s, 2, 10, QtCore.QChar('0'))
+		s = int(msec / 1000 % 60)
+		m = int(msec / 1000 / 60 % 60)
+		#h = msec / 1000 / 3600 % 24
+		#self.racetime = QtCore.QString("%1:%2:%3").arg(h, 2, 10, QtCore.QChar('0')).arg(m, 2, 10, QtCore.QChar('0')).arg(s, 2, 10, QtCore.QChar('0'))
+		self.racetime = f"{m:02.0f}:{s:02.0f}"
 		self.lcdNumber.display(self.racetime)
 
 	def playSound(self):
 		if self.sound:
 			self.audio.stop()
 			self.sound = False
-			self.pushButton_19.setIcon(QtGui.QIcon('../files/play-icon.png'))
+			self.pushButton_19.setIcon(QtGui.QIcon(os.path.join(__APP_DIR__, '../files/play-icon.png')))
 		else:
 			self.sound = True
 			self.audio.play()
-			self.pushButton_19.setIcon(QtGui.QIcon('../files/pause-icon.png'))
+			self.pushButton_19.setIcon(QtGui.QIcon(os.path.join(__APP_DIR__, '../files/pause-icon.png')))
+
+	def setVolume(self, volume):
+		self.audio.changeVolume(volume)
 
 	def clickButton(self,relay):
 		qout = kvido(conf['QUIDO']['dout'])
@@ -207,33 +268,33 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
 	def saveTraining(self):
 		self.query.exec_("SELECT idTraining FROM training WHERE status=2 LIMIT 1")
-		self.query.first() 
-		trainingid = self.query.value(0).toInt()[0]
+		self.query.first()
+		trainingid = self.query.value(0)
 		message = []
-		if trainingid != 0:
+		if trainingid:
 			self.query.exec_("SELECT member.volume, member.press_start, member.press_end, CONCAT(person.name,' ', person.surname) AS name "
 							"FROM member LEFT JOIN person ON member.person_id = person.idPerson WHERE training_id=%d" % trainingid)
 			while self.query.next():
-				if self.query.value(0).toInt()[0]==0 or self.query.value(1).toInt()[0]==0 or self.query.value(2).toInt()[0]==0:
+				if int(self.query.value(0))==0 or int(self.query.value(1))==0 or int(self.query.value(2))==0:
 					message.append (u'Nejsou vyplněné všechny hodnoty u cvičících')
-				if self.query.value(1).toInt()[0]<=self.query.value(2).toInt()[0]:
-					message.append (u'%s nemá počáteční tlak není menší než koncový' % self.query.value(3).toString())
+				if int(self.query.value(1))<=int(self.query.value(2)):
+					message.append (u'%s nemá počáteční tlak větší než koncový' % self.query.value(3))
 		else:
 			message.append (u'Není dokončený žádný trénink')
 		if not message:
 			self.query.exec_("UPDATE training SET status=10 WHERE status=2")
 			self.membermodel.refresh(trainingid)
-			self.finishedtrainingmodel.select()
+			self.finishedtrainingmodel.refresh()
 			self.lcdNumber.display("00:00")
 		else:
 			message = set(message)
 			text = "\n".join(message)
-			QtGui.QMessageBox.warning(self, u'Varování',text, QtGui.QMessageBox.Ok)
+			QMessageBox.warning(self, u'Varování',text, QMessageBox.Ok)
 
 	def delTraining(self):
 		self.query.exec_("SELECT idTraining FROM training WHERE status<>10 LIMIT 1")
 		if self.query.first():
-			trainingid = self.query.value(0).toInt()[0]
+			trainingid = self.query.value(0)
 			if trainingid != 0:
 				self.query.exec_("DELETE FROM training WHERE status<>10")
 				self.query.exec_("DELETE FROM member WHERE training_id=%d" % (trainingid))
@@ -243,50 +304,64 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
 	def delMember(self):
 		trainingid = self.getTraining()
+		if trainingid is None:
+			QMessageBox.warning(self, u'Varování', u'Nelze odebrat člena z proběhlého cvičení', QMessageBox.Ok)
+			return
 		row = self.memberTableView.selectionModel().currentIndex().row()
-		idmember = self.membermodel.record(row).value("idMember").toInt()[0]
-		self.query.exec_("DELETE FROM member WHERE idMember=%d" % (idmember))
-		self.membermodel.view()
-		count = self.countMember(trainingid)
-		if count == 1:
-			self.query.exec_("UPDATE training SET status=0 WHERE idTraining=%d" % (trainingid))
-			self.startButton.setEnabled(False)
-		elif count == 0:
-			self.query.exec_("DELETE FROM training WHERE training_id=%d" % (trainingid))
+		idMember = self.membermodel.record(row).value("idMember")
+		if idMember is not None:
+			self.query.exec_("DELETE FROM member WHERE idMember=%d" % (idMember))
+			self.membermodel.view()
+			count = self.countMember(trainingid)
+			if count == 1:
+				self.query.exec_("UPDATE training SET status=0 WHERE idTraining=%d" % (trainingid))
+				self.startButton.setEnabled(False)
+			elif count == 0:
+				self.query.exec_("DELETE FROM training WHERE training_id=%d" % (trainingid))
+		else:
+			QMessageBox.warning(self, u'Varování',u"Není vybrána žádná osoba", QMessageBox.Ok)
 
-	def addMember(self):
+	def addMember(self, personId):
 		index = self.personTableView.selectionModel().currentIndex()
 		row = self.proxy.mapToSource(index).row()
-		personid = self.personmodel.record(row).value("idPerson").toInt()[0]
+		if not personId:
+			personId = self.personmodel.record(row).value("idPerson")
 		if row>=0:
 			trainingid = self.getTraining()
-			if self.countMember(trainingid) < 5:
-				self.query.exec_("SELECT COUNT(idmember) FROM member WHERE training_id=%d AND person_id=%d" % (trainingid,personid))
-				self.query.first() 
-				checkperson = self.query.value(0).toInt()[0]
+			if trainingid is None:
+				QMessageBox.warning(self, u'Varování', u'Nelze přidat člena do proběhlého cvičení', QMessageBox.Ok)
+				return
+			if self.countMember(trainingid) < 4:
+				self.query.exec_("SELECT COUNT(idmember) FROM member WHERE training_id=%d AND person_id=%d" % (trainingid,personId))
+				self.query.first()
+				checkperson = self.query.value(0)
 				if checkperson == 0:
-					self.query.exec_("INSERT INTO member (training_id,person_id) VALUES (%d,%d)" % (trainingid,personid))
+					self.query.exec_("INSERT INTO member (training_id,person_id) VALUES (%d,%d)" % (trainingid,personId))
 					self.membermodel.refresh(trainingid)
 					self.memberTableView.hideColumn(0)
 					if self.countMember(trainingid) >= 2:
 						self.query.exec_("UPDATE training SET status=1 WHERE idTraining=%d" % (trainingid))
 						self.startButton.setEnabled(True)
-		
+		else:
+			QMessageBox.warning(self, u'Varování',u"Není vybrána žádná osoba", QMessageBox.Ok)
 
 
 	def countMember(self, trainingid):
 		self.query.exec_("SELECT COUNT(idmember) FROM member WHERE training_id=%d" % (trainingid))
-		self.query.first() 
-		return self.query.value(0).toInt()[0]
+		self.query.first()
+		return self.query.value(0)
 
 	def getTraining(self):
 		self.trainingmodel.select()
 		openstatus = self.trainingmodel.rowCount()
 		if openstatus == 0:
-			self.query.exec_("INSERT INTO training (date) VALUES (CURDATE())")
-			trainingid = self.query.lastInsertId().toInt()[0]
+			self.query.exec_("INSERT INTO training (time_start) VALUES (NOW())")
+			trainingid = self.query.lastInsertId()
 		else:
-			trainingid = self.trainingmodel.record(0).value("idTraining").toInt()[0]
+			trainingid = self.trainingmodel.record(0).value("idTraining")
+			status = self.trainingmodel.record(0).value("status")
+			if status == 2:
+				return None
 		return trainingid
 
 
@@ -298,84 +373,93 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 	def delPerson(self):
 		index = self.personTableView.selectionModel().currentIndex()
 		row = self.proxy.mapToSource(index).row()
-		if row>0:
-			reply = QtGui.QMessageBox.question(self, u'Smazat',"Opravdu chcete smazat osobu?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-			if reply == QtGui.QMessageBox.Yes:
+		if row>=0:
+			reply = QMessageBox.question(self, u'Smazat',u"Opravdu chcete smazat osobu?", QMessageBox.Yes, QMessageBox.No)
+			if reply == QMessageBox.Yes:
 				record = self.personmodel.record(row)
 				record.setValue("valid",0)
 				self.personmodel.setRecord(row, record);
 				self.personmodel.submitAll()
 		else:
-			QtGui.QMessageBox.warning(self, u'Varování',"Není vybrána žádná osoba", QtGui.QMessageBox.Ok)
+			QMessageBox.warning(self, u'Varování',u"Není vybrána žádná osoba", QMessageBox.Ok)
 
 	def addPerson(self):
 		personform = PersonForm(self.personmodel)
 		personform.exec_()
+		self.query.exec_("SELECT LAST_INSERT_ID()")
+		self.query.first()
+		lastPerson = self.query.value(0)
+		#self.personTableView.selectRow(personform.row)
+		if personform.addMember == True:
+			self.addMember (lastPerson)
+
+	def editPerson(self):
+		index = self.personTableView.selectionModel().currentIndex()
+		row = self.proxy.mapToSource(index).row()
+		if row>=0:
+			personform = PersonForm(self.personmodel, row)
+			personform.exec_()
+		else:
+			QMessageBox.warning(self, u'Varování',u"Není vybrána žádná osoba", QMessageBox.Ok)
 
 	def updateMember(self):
 		row = self.memberTableView.selectionModel().currentIndex().row()
-		memberform = MemberForm(self.membermodel,row)
-		memberform.exec_()
+		if row>=0:
+			memberform = MemberForm(self.membermodel, row)
+			memberform.exec_()
+		else:
+			QMessageBox.warning(self, u'Varování',u"Není vybrána žádná osoba", QMessageBox.Ok)
 
 	def printTrainingProtocol(self):
-		content = u"Bude obsahovat údaje o průběhu výcviku. <html lang='cs'> \
-<head> \
-	<meta charset='UTF-8'>\
-	<title>Test css</title>\
-	<style>\
-		h1 {color: red;}\
-		h2 {color: green;}\
-		.text-center {text-align: right;}\
-		.space-left {margin-left: 40px;}\
-	</style>\
-</head>\
-<body>\
-	<h1>Toto je červený nadpis</h1>\
-	<h2>Toto je zelený nadpis</h2>\
-	<h3 class='text-center'>Toto je vycentrovany text.</h3>\
-	<p class='space-left'>Toto je odsazeny text z leva 40px.</p>\
-</body>\
-</html>"
-		#tempFile = QtCore.QTemporaryFile()
-		#if tempFile.open():
-		#	tempName = tempFile.fileName()
-		printer = QtGui.QPrinter()
-		#printer.setOutputFileName(tempName)
-		printer.setOutputFormat(QtGui.QPrinter.PdfFormat)
-		printer.setPageSize(QtGui.QPrinter.A4)
-		#printer.setOrientation(QtGui.QPrinter.Landscape)        
-		#printer.setFullPage(True)
-		
-		doc = QtGui.QTextDocument()
-		#doc.setDefaultStyleSheet(self.stylesheet)
-		doc.setHtml(content)
-
-		#view = QtWebKit.QWebView()
-		#view.setHtml(htmlContent)
-		#view.print_(printer)
-		
-		dialog = QtGui.QPrintPreviewDialog()
-		#dialog.paintRequested.connect(self.editor.print_)
-		dialog.paintRequested.connect(doc.print_)
-		dialog.exec_()
-
-	#	def print_doc(self, doc):
-    #    dialog = QtGui.QPrintDialog()
-    #    if dialog.exec_() == QtGui.QDialog.Accepted:
-    #        doc.print_(dialog.printer())
-	#    def print_preview_doc(self, doc):
-    #    dialog = QtGui.QPrintPreviewDialog()
-    #    dialog.paintRequested.connect(doc.print_)
-    #    dialog.exec_()
+		#trainingid = self.trainingTableView.selectionModel().currentIndex().row()
+		row = self.trainingTableView.selectionModel().currentIndex().row()
+		trainingid = self.finishedtrainingmodel.record(row).value("idTraining")
+		if trainingid > 0:
+			doc = createProtocol(self.query, trainingid, LA.getDisplayName())
+			del doc
+		else:
+			QMessageBox.warning(self, u'Varování', u"Není vybráno žádné cvičení", QMessageBox.Ok)
 
 	def closeEvent(self, event):
 		quit_msg = u"Opravdu chcete ukončit program?"
-		reply = QtGui.QMessageBox.question(self, 'Message', quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-		if reply == QtGui.QMessageBox.Yes:
+		reply = QMessageBox.question(self, 'Zavřít', quit_msg, QMessageBox.Yes, QMessageBox.No)
+		if reply == QMessageBox.Yes:
 			self.delTraining()
 			event.accept()
 		else:
 			event.ignore()
+
+class Login(QDialog,Ui_Login_Dialog):
+	def __init__(self):
+		super(self.__class__, self).__init__()
+		self.setupUi(self)
+		self.buttonBox.accepted.connect(self.handleLogin)
+		self.buttonBox.rejected.connect(self.handleCancel)
+
+	def handleLogin(self):
+		username = self.userLineEdit.text()
+		password = self.passwordLineEdit.text()
+		if not username:
+			QMessageBox.warning(self, 'Chyba', u'Není zadáno uživatelské jméno!')
+		elif not password:
+			QMessageBox.warning(self, 'Chyba', u'Není zadáno heslo!')
+		else:
+			self.AttemptLogin(username, password)
+
+	def AttemptLogin(self, username, password):
+		if LA.userExist(username):
+			if LA.checkPassword(str(password)):
+				if LA.checkRights():
+					self.accept()
+				else:
+					QMessageBox.warning(self, 'Chyba', u'Uživatel nemá dostatečná opravnění')
+			else:
+				QMessageBox.warning(self, 'Chyba', u'Špatné heslo!')
+		else:
+			QMessageBox.warning(self, 'Chyba', u'Uživatel neexistuje!')
+
+	def handleCancel(self):
+		self.close()
 
 
 def read_config():
@@ -386,6 +470,8 @@ def read_config():
 		conf[section] = {}
 		for option in config.options(section):
 			conf[section][option] = config.get(section, option)
+			if (conf[section][option] == "True") or (conf[section][option] == "False"):
+				conf[section][option] = config.getboolean(section, option)
 
 
 if __name__ == '__main__':
@@ -399,22 +485,18 @@ if __name__ == '__main__':
 	try:
 		db.open()
 	except:
-		print "chyba"
-
+		print ("Chyba pripojeni DB")
 	#qin = kvido(conf['din'])
 	#qout = kvido("192.168.16.232",10001)
 	#print qout.get_output_state(1)
 	#qout.invertState(1)
 	#print qout.get_output_state(1)
-
-	app = QtGui.QApplication(sys.argv)
-	mainWin = MainWindow()
-	#camWidget = QtGui.QWidget(mainWin)
-		#ui = Ui_Kamery()
-		#ui.setupUi(camWidget)
-	#camWidget.setWindowFlags(QtCore.Qt.Window)
-	#cam = Camera(conf['CAMERA']['cam1'])
-	#camWidget.show()
-	ret = app.exec_()
-	sys.exit( ret )
-	qout.disconnect()
+	LA = LdapAuth(host=conf['LDAP']['host'], username=conf['LDAP']['username'], password=conf['LDAP']['password'], base=conf['LDAP']['base'], group=conf['LDAP']['group'])
+	app = QApplication(sys.argv)
+	login = Login()
+	if login.exec_() == QDialog.Accepted:
+		mainWin = MainWindow()
+		ret = app.exec_()
+		#qout.disconnect()
+		LA.unbind()
+		sys.exit (ret)

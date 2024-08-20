@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #Python device communications protocol framework (pydcpf)
 #Copyright (C) 2013  Ondrej Grover
 #
@@ -19,7 +18,6 @@
 import pyspinel
 import struct 
 
-import binascii
 _outputs_inputs_count_fmts = {
 	1 : 'B',
 	2 : 'H',
@@ -72,7 +70,7 @@ class Device(pyspinel.Device):
 			False if inactive (low voltage)
 		"""
 		return self._decode_inputs_outputs_state(
-			self.query(instruction=0x30)
+			self.query(instruction=48) # 0x30 in hex read output
 			)
 
 		
@@ -104,7 +102,7 @@ class Device(pyspinel.Device):
 			no order is required, arbitrary outputs can be given
 		"""
 		return self.query(
-			instruction=0x20,
+			instruction=32, # 0x20 in hex set output
 			parameters=struct.pack("%ib" % len(outputs_state),
 							 # 1 bit H/L (-/+ bit) + 7 bits for output number from 1 to 127
 							 *[ abs(i) if i < 0 else i - 128 for i in outputs_state ]),
@@ -118,7 +116,7 @@ class Device(pyspinel.Device):
 		output : output number
 		"""
 		return self.query(
-			instruction=0x20,
+			instruction=32, # 0x20 in hex set output
 			parameters=struct.pack("B",output+128))
 
 	def set_output_off(self, output):
@@ -129,7 +127,7 @@ class Device(pyspinel.Device):
 		output : output number
 		"""
 		return self.query(
-			instruction=0x20,
+			instruction=32, # 0x20 in hex set output
 			parameters=struct.pack("B",output))
 
 	def get_inputs_state(self):
@@ -143,7 +141,7 @@ class Device(pyspinel.Device):
 			False if inactive (low voltage)
 		"""
 		return self._decode_inputs_outputs_state(
-			self.query(instruction=0x31)
+			self.query(instruction=49) # 0x31 in hex set input
 			)
 
 	def get_input_state(self, intput_number):
