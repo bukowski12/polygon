@@ -15,14 +15,29 @@
 
 """Spinel 97 binary protocol implementation"""
 
-import sys
 import socket #for socket communication
 import struct #for binary data packing
 from random import randint #for sig generation
+from logger_config import logger
+import os
+import atexit
+
+__APP_DIR__ = os.path.dirname(__file__)
+
 
 check_checksums = True #calculate checksums for received packets
 check_packet_structure = True #check received packets for the right mask
-log = False
+log = False #log all communication to a file
+
+def close_log():
+	"""Close the Spinel 97 log file."""
+	global log_file
+	if log and 'log_file' in globals():
+		try:
+			log_file.close()
+			logger.info("Spinel 97 log file closed")
+		except Exception as e:
+			logger.error(f"Error closing Spinel 97 log file: {e}")
 
 ################################################################
 ####                   PROTOCOL SPECIFICATION               ####
@@ -47,8 +62,17 @@ ACK = {
 	}
 
 if log:
-	log_file = open('spinel97.log', 'a')
-	
+	__log_filename__ = os.path.join(__APP_DIR__, "../log/spinel97.log")
+	try:
+		log_file = open(__log_filename__, 'a', encoding='utf-8')
+		logger.info("Logging of Spinel 97 communication enabled, log file: " + __log_filename__)
+		# Register close_log to be called when Python exits
+		atexit.register(close_log)
+	except Exception as e:
+		logger.error(f"Failed to open Spinel 97 log file {__log_filename__}: {e}")
+		log = False  # Disable logging if file cannot be opened
+
+
 
 ################################################################
 ####                   COMMUNICATION CLASSES                ####
@@ -77,7 +101,7 @@ class Device(object):
 			#self.socket.settimeout(3)
 			self.socket.connect((ip, port))
 		except socket.error as err:
-			print ("Socket creation failed with error: ", err)
+			logger.exception("Socket creation failed with error: %s", err)
 	
 	def disconnect(self):
 		self.socket.shutdown(2)
@@ -88,7 +112,7 @@ class Device(object):
 
 		Query the module for a response with the given instruction, possibly with additional instruction parameters.
 		Unless the address is specified, the universal address is used.
-		A response from the device will be received at the end. This can be overriden by the receive parameter which is useful for debugging purposes when using the universal address as the response would contain the real address. The response must be then retreived by a separate :func:`receive` call, otherwise further communication will be blocked.
+		A response from the device will be received at the end. This can be overriden by the receive parameter which is useful for debugging purposes when using the universal address as the response would contain the real address.
 
 		Parameters
 		----------
@@ -99,7 +123,7 @@ class Device(object):
 			parameters to the instruction as a string representing bytes in hex
 			this apporach is more flexible as different implementaions pack the parameters array differently
 			defaults to empty string '' (as not all instructions have parameters)
-		address : int 
+		address : int
 			address of the module, can be e.g. a channel number
 			or a special address:
 				0xff (255) - broadcast address, all devices react
@@ -117,38 +141,49 @@ class Device(object):
 			string of chars, each representing 1B
 			this is because other methods may want to unpack data differently
 			returns None if broadcast address was used (as devices don't respond to this address) or if receive parameter was set to False
-			
+
 		Raises
 		------
 		the same Errors as :func:`receive` and also ValueError on unexpected ADR, provided the response will be received
 		"""
-		#hex_instruction = bytes.fromhex(str(instruction))
-		num = 5 + len(parameters) #ADR+SIG+INST+SUM+CR+ DATA
-		self.current_sig = randint(0, 255) #packet signature
-		SUM = 255 - (139 + num + address +self.current_sig + instruction) #97 + 42 (*) = 139
-		for param in parameters:
-			SUM -= param
-		SUM = abs(SUM % 256)
-		#while SUM < 0: #simulate byte overrun
-		#	SUM += 256 #must be 1B size
-		packet = struct.pack('>2BH3B', PRE, FRM, num, address, self.current_sig, instruction) + parameters
-		packet += struct.pack('2B', SUM, CR)
 		try:
+			#hex_instruction = bytes.fromhex(str(instruction))
+			num = 5 + len(parameters) #ADR+SIG+INST+SUM+CR+ DATA
+			self.current_sig = randint(0, 255) #packet signature
+			SUM = 255 - (139 + num + address +self.current_sig + instruction) #97 + 42 (*) = 139
+			for param in parameters:
+				SUM -= param
+			SUM = abs(SUM % 256)
+			#while SUM < 0: #simulate byte overrun
+			#	SUM += 256 #must be 1B size
+			packet = struct.pack('>2BH3B', PRE, FRM, num, address, self.current_sig, instruction) + parameters
+			packet += struct.pack('2B', SUM, CR)
 			self.socket.send(packet)
 		except socket.error as e:
-			print ("Error sending data: %s") % e
+			logger.exception("Error sending data: %s", e)
 			#sys.exit(1)
 		if log:
-			#log_file.write(packet + "\n")
-			log_file.write(packet.decode())
-		if address == broadcast_address or not receive: #broadcast address, no response should be received OR we don't want to receive anything
+			try:
+				# Log sent packet with timestamp
+				import datetime
+				timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+				log_file.write(f"[{timestamp}] SENT: {packet.hex()}\n")
+				log_file.flush()  # Ensure data is written immediately
+			except Exception as e:
+				logger.error(f"Error writing to Spinel 97 log: {e}")
+		if address == broadcast_address or not receive:
 			return None
-		else: #should get a response
-			adr, data = self.receive()
-			if adr != address and address != universal_address:
-				raise ValueError("Wrong packet address ADR, expected " + str(address) + " , got " + str(adr))
-			else:
-				return data
+		else:
+			try:
+				adr, data = self.receive()
+				if adr != address and address != universal_address:
+					raise ValueError("Wrong packet address ADR, expected " + str(address) + " , got " + str(adr))
+				else:
+					return data
+			except ValueError as e:
+				logger.exception(e)
+			except RuntimeError as e:
+				logger.exception(e)
 
 	def receive(self):
 		"""receive()
@@ -175,16 +210,30 @@ class Device(object):
 		"""
 		packet = self.socket.recv(7) #get the packet header
 		if log:
-			log_file.write(packet)
+			try:
+				# Log received packet header with timestamp
+				import datetime
+				timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+				log_file.write(f"[{timestamp}] RECV HEADER: {packet.hex()}\n")
+				log_file.flush()
+			except Exception as e:
+				logger.error(f"Error writing to Spinel 97 log: {e}")
 		pre, frm, num, address, sig, ack = struct.unpack('>2BH3B', packet)
 		try:
 			packet = self.socket.recv(num)
 		except socket.error as e:
-		    print ("Error receiving data: %s") % e
+			logger.exception("Error receiving data: %s", e)
     		#sys.exit(1)
 		if log:
-			log_file.write(packet)
-		data = packet[:-2] #without SUM and CR 
+			try:
+				# Log received packet data with timestamp
+				import datetime
+				timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+				log_file.write(f"[{timestamp}] RECV DATA: {packet.hex()}\n")
+				log_file.flush()
+			except Exception as e:
+				logger.error(f"Error writing to Spinel 97 log: {e}")
+		data = packet[:-2] #without SUM and CR
 		if check_packet_structure:
 			cr = packet[-1]
 			if pre != PRE:

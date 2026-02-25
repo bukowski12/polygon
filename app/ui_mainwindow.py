@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout, QTabWidget, QHBoxLayout, QGroupBox, QLabel, QSlider, QLCDNumber, QSizePolicy, QSpacerItem, QTableView, QStatusBar, QAction, QDialog, QWidget, QLineEdit, QDialogButtonBox, QFormLayout, QDataWidgetMapper \
 							, QFrame, QDateEdit, QCheckBox, QComboBox
+
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -1130,7 +1131,7 @@ class PersonForm(QDialog):
 			self.row = self.model.rowCount()
 			self.mapper.submit()
 			self.model.insertRow(self.row)
-			#self.mapper.setCurrentIndex(self.row)
+			self.mapper.setCurrentIndex(self.row)
 			self.buttonBox.accepted.connect(self.addPerson)
 		else:
 			self.addMemberCheckBox.setEnabled(False)

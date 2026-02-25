@@ -1,6 +1,40 @@
+# Konfigurace (obsahuje hesla)
 config/polygon.conf
-files/noise.wav
+
+# Logy
 log/*
-*.pyc
 *.log
+
+# Nahrana videa
+video/*
+
+# Zvukove soubory
+files/noise.wav
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.env
+venv/
+.venv/
+
+# Docasne soubory
 *.bak
+*.tmp
+*~
+
+# PDF (tiskoviny)
+bin/print.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+#stara verze
+smazat/

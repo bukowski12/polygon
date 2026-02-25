@@ -1,0 +1,71 @@
+[LDAP]
+	host = ldaps://domena.example.cz
+	username = svc_polygon@domena.example.cz
+	password = HESLO
+	base = OU=Jednotka,OU=HZS,DC=domena,DC=example,DC=cz
+	group = CN=G_Polygon,OU=Groups,OU=HZS,DC=domena,DC=example,DC=cz
+
+[MYSQL]
+	database = polygon
+	host = 192.168.1.100
+	user = polygon
+	password = HESLO
+
+[QUIDO]
+	# IP adresa QUIDO modulu pro digitalni vstupy (QUIDO_IN)
+	din = 192.168.1.231
+	# IP adresa QUIDO modulu pro digitalni vystupy (QUIDO_OUT)
+	dout = 192.168.1.232
+
+[AUDIO]
+	file = ../files/noise.wav
+
+[QUIDO_IN]
+	# Mapovani patrovych cidel na cislo vstupu QUIDO
+	# Nazev musi odpovidat objectName labelu v UI (bez suffixu "Label")
+	floor_01 = 0
+	floor_02 = 1
+	floor_03 = 2
+	floor_04 = 3
+	floor_05 = 4
+	floor_06 = 5
+	floor_07 = 6
+	floor_08 = 7
+	floor_09 = 8
+	floor_10 = 9
+
+[QUIDO_OUT]
+	# Mapovani tlacitku na cislo releoveho vystupu QUIDO
+	# Nazev musi odpovidat objectName tlacitka v UI (bez suffixu "Button")
+	fan12 = 1
+	fan34 = 2
+	smoke = 3
+	glow = 4
+	strobo = 5
+	hotZone = 6
+	infraLight = 7
+	fanControlRoom = 8
+	polygonLight1 = 9
+	polygonLight2 = 10
+	polygonLight3 = 11
+	hotZoneLight = 12
+	stressRoomLight = 13
+	controlRoomLight = 14
+	louver = 15
+	helpLight = 16
+
+[CAMERA]
+	# True = kamery jsou vypnute, False = kamery jsou zapnute
+	disable = False
+	# Rozliseni jednoho kameroveho nahledu v pixelech
+	width = 475
+	height = 356
+	# Volitelne: vychozi prihlasovacie udaje pro kamery
+	user = admin
+	password = HESLO
+	# RTSP streamy kamer (cam1 az cam11)
+	cam1 = rtsp://admin:HESLO@192.168.1.20/Streaming/Channels/2
+	cam2 = rtsp://admin:HESLO@192.168.1.21/Streaming/Channels/2
+#	cam3 = rtsp://admin:HESLO@192.168.1.22/Streaming/Channels/2
+#	cam4 = rtsp://admin:HESLO@192.168.1.23/Streaming/Channels/2
+

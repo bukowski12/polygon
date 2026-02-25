@@ -1,3 +1,61 @@
+#1.0.2		02.2025
+	- opraveno zobrazovani obrazu z kamer (cv2.VideoCapture s RTSP streamy)
+	- opravena inicializace kamerovych zarizeni (_init_devices s timeoutem 3s)
+	- opraveno cteni snimku z kamer (_get_frame s automatickym znovuoteviranim)
+	- opraveno nastaveni num_cameras az po filtraci URL
+	- implementovano skutecne nahravani videa (cv2.VideoWriter, XVID)
+	- opraveno uvolneni VideoWriter pri zastaveni nahravani
+	- obnovena funkcionalita tlacitka po stisku zezelena (QUIDO vystup aktivni)
+	- pridana metoda click_button() pro prepinani releovych vystupu
+	- opravena metoda read_relays() - nacita stavy vstupu a styluje tlacitka
+	- pripojena vsechna tlacitka technologie a svetel k QUIDO vystupum
+
+#1.0.1		01.2025
+	- opraveny cirkularni importy (logger_config.py)
+	- refaktorace bezpecnosti a kvality kodu
+	- vylepsene error handling a validace vstupu
+	- pridany type hints a dokumentace
+	- opraveno pripojeni k databazi (globalni pripojeni)
+	- vycistena struktura projektu
+	- opravena karta Osoby (skryti sloupcu idPerson a valid)
+	- implementovany vsechny chybejici funkce z puvodniho main.py
+	- funkcni tlacitka pro spravu osob, clenu a treninku
+	- pridano formatovani tabulek (barvy, styly, razeni)
+	- funkcni vyhledavani v tabulce osob
+	- opraveno pridavani osob do databaze (mapper.setCurrentIndex)
+	- implementovana funkcionalita start/stop tlacitka (stopky, timer)
+	- pridana podpora pro nahravani videa pri treninku
+	- opravena kriticka chyba s neexistujici metodou _init_query
+	- opraveno checkbox "Pridat do cviceni" pri zakladani osoby
+	- vylepsena addMember() metoda pro praci s predanym personId
+	- pridano spravne ziskavani ID nove osoby (LAST_INSERT_ID)
+	- pridano lepsi error handling a informativni zpravy
+	- implementovan funkcni tisk protokolu cviceni
+	- pridano ulozeni uzivatelskeho jmena pri prihlaseni
+	- integrace s protocol.py modulem pro HTML protokoly
+	- pridana podpora pro QPrintPreviewDialog
+	- opraveno pouziti display name misto numerickeho ID v protokolu
+	- rozsirena LDAP autentifikace o ziskani displayName z AD
+	- pridany fallback mechanismus pro jmeno uzivatele
+	- pridano jmeno prihlaseneho uzivatele do statusbaru
+	- opraveno logovani Spinel 97 komunikace (flush, timestamp, error handling)
+	- vylepseny format logu s hex daty a casovymi znackami
+	- pridano automaticke zavirani Spinel 97 log souboru (atexit + closeEvent)
+	- implementovana close_log() funkce s robustnim error handlingem
+	- opravena uroven logovani z ERROR na INFO (logger.info nyni funguje)
+	- vylepsena viditelnost informativnich zprav v aplikacnim logu
+	- opraveno otevirani matrix okna s kamerami (chybel self.show())
+	- pridano automaticke spusteni kameroveho threadu (chybel self.start())
+	- implementovana modra "NO SIGNAL" obrazovka s textem a casem
+	- opraveno matrix pozadi na modre barvy jako v puvodni verzi
+	- pridano datum a cas do matrix zobrazeni
+	- opraveno spravne ukonceni kameroveho threadu pri zavreni
+	- opravena barva matrix pozadi z cerne na modrou (BGR: 0,0,153)
+	- zajisteno vytvoreni matrix pro vsechny kamery i kdyz jsou nedostupne
+	- opraveno spousteni camera threadu (thread se spousti az po pripojeni signalu)
+	- pridano explicitni nastaveni camWindow geometrie jako v puvodni verzi
+	- opraveno zobrazovani matrix - display metoda nyni funguje spravne
+
 #1.0.0		08.2024
 	- nove AD
 	- python 3
@@ -11,5 +69,5 @@
 	- opraveny jednotky tlaku
 
 #0.0.7#		7.12.2017
-	-	opraveno spousteni zvuku (cesta k souboru)
+	- opraveno spousteni zvuku (cesta k souboru)
 	- zmenen dialog na doplneni hodnot u clena jednotky
