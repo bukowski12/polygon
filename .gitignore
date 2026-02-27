@@ -38,3 +38,6 @@ bin/print.pdf
 
 #stara verze
 smazat/
+
+#big file
+files/noise.wav
