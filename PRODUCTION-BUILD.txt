@@ -1,0 +1,8 @@
+Polygon Control System
+Build type: RELEASE
+Version: 2.0
+Source develop SHA: becb1c9c7895e0f1625e4103b323de0df3a8038d
+Release date: 2026-10-20
+Repository: https://github.com/bukowski12/polygon.git
+Branch: production
+Production commit SHA: see the release manifest polygon-v2.0-production.manifest.txt

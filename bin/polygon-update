@@ -1,0 +1,123 @@
+#!/bin/bash
+# DEPLOY-01: safe update of this Polygon checkout - run by bin/polygon-start.
+#
+# Fast-forward only, and only on the release channels `develop` / `production`
+# from origin. Never touches config/polygon.conf, log/ or video/ (all
+# git-ignored), never `git clean`, never sudo, never APT, never a DB migration.
+#
+#   - not a release branch, tracked changes, local ahead or diverged -> no update
+#   - fetch fails (no network / DNS / GitHub) or times out -> warning, no update
+#   - after the fast-forward the new version must pass bin/polygon-preflight;
+#     a HARD FAIL resets the tracked files back to OLD_HEAD (that commit is
+#     remembered in log/update.rejected and not tried again)
+#
+# Exit codes (bin/polygon-start starts the app only on 0):
+#    0  safe to start - updated, or no update for any normal reason (no
+#       network, timeout, local changes, ahead/diverged, rejected commit, a
+#       failed new version rolled back to OLD_HEAD)
+#   64  usage error
+#   70  FATAL - a new version failed the preflight AND the rollback to OLD_HEAD
+#       failed: the checkout is a version known to be broken, the app must not
+#       start. Recorded in log/update.fatal; every later start stays FATAL until
+#       the checkout is moved off that commit by hand (nothing is cleaned or
+#       deleted automatically).
+# Everything is logged to log/update.log.
+#
+# Environment (tests): POLYGON_UPDATE_FETCH_TIMEOUT (s, default 20).
+
+main() {
+    local script_dir repo log_dir log branch old_head remote base rejected preflight_out preflight_rc
+    script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    if [ "$#" -gt 0 ]; then
+        case "$1" in
+            -h|--help) echo "Usage: bin/polygon-update   (fast-forward of develop/production from origin)"; return 0 ;;
+            *) echo "polygon-update: unknown argument: $1" >&2; return 64 ;;
+        esac
+    fi
+    repo="$(git -C "$script_dir/.." rev-parse --show-toplevel 2>/dev/null)" || {
+        echo "polygon-update: $script_dir/.. is not a git checkout - no update" >&2; return 0; }
+    log_dir="$repo/log"
+    mkdir -p "$log_dir"
+    log="$log_dir/update.log"
+
+    _log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $1 $2" >> "$log"; echo "polygon-update: $1 $2" >&2; }
+
+    # one update at a time (two starts at once)
+    exec 9>"$log_dir/update.lock"
+    if ! flock -n 9; then
+        _log WARNING "another update is running - skipped"; return 0
+    fi
+
+    # an earlier failed rollback: the checkout is still the broken version
+    if [ -f "$log_dir/update.fatal" ]; then
+        if [ "$(git -C "$repo" rev-parse HEAD 2>/dev/null)" = "$(cat "$log_dir/update.fatal")" ]; then
+            _log ERROR "FATAL: checkout is still the version that failed the preflight and could not be rolled back ($(cut -c1-7 "$log_dir/update.fatal")) - app NOT started, fix the checkout by hand"
+            return 70
+        fi
+        rm -f "$log_dir/update.fatal"
+        _log INFO "checkout moved off the broken version - FATAL state cleared"
+    fi
+
+    branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)" || {
+        _log WARNING "detached HEAD - no update"; return 0; }
+    case "$branch" in
+        develop|production) ;;
+        *) _log INFO "branch '$branch' is not a release channel (develop/production) - no update"; return 0 ;;
+    esac
+
+    if ! git -C "$repo" diff --quiet || ! git -C "$repo" diff --cached --quiet; then
+        _log WARNING "tracked files changed locally - no update (nothing was touched)"; return 0
+    fi
+
+    # bounded: a missing network / GitHub must not hold the start for long
+    if ! GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10" \
+            timeout --kill-after=5 "${POLYGON_UPDATE_FETCH_TIMEOUT:-20}" \
+            git -C "$repo" -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=10 \
+            fetch --quiet --no-tags origin "+refs/heads/$branch:refs/remotes/origin/$branch" >/dev/null 2>&1; then
+        _log WARNING "fetch origin/$branch failed (network/DNS/GitHub unavailable or timeout) - starting the installed version"
+        return 0
+    fi
+
+    old_head="$(git -C "$repo" rev-parse HEAD)"
+    remote="$(git -C "$repo" rev-parse "refs/remotes/origin/$branch")"
+    if [ "$old_head" = "$remote" ]; then
+        _log INFO "up to date ($branch ${old_head:0:7})"; return 0
+    fi
+    rejected="$(cat "$log_dir/update.rejected" 2>/dev/null)"
+    if [ "$remote" = "$rejected" ]; then
+        _log WARNING "origin/$branch ${remote:0:7} failed the preflight before - not tried again"; return 0
+    fi
+    base="$(git -C "$repo" merge-base HEAD "$remote" 2>/dev/null)"
+    if [ "$base" = "$remote" ]; then
+        _log WARNING "local $branch ${old_head:0:7} is ahead of origin - no update"; return 0
+    fi
+    if [ "$base" != "$old_head" ]; then
+        _log WARNING "local $branch ${old_head:0:7} and origin ${remote:0:7} diverged - no update"; return 0
+    fi
+
+    if ! git -C "$repo" merge --ff-only --quiet "$remote" >/dev/null 2>&1; then
+        _log WARNING "fast-forward to ${remote:0:7} failed - staying on ${old_head:0:7} (nothing changed)"
+        return 0
+    fi
+
+    preflight_out="$("$repo/bin/polygon-preflight" --quiet 2>&1)"
+    preflight_rc=$?
+    if [ "$preflight_rc" -ge 2 ]; then
+        if git -C "$repo" reset --quiet --keep "$old_head"; then
+            echo "$remote" > "$log_dir/update.rejected"
+            _log ERROR "new version ${remote:0:7} failed the preflight - rolled back to ${old_head:0:7}: $(echo "$preflight_out" | tr '\n' ' ')"
+        else
+            echo "$remote" > "$log_dir/update.rejected"  # never tried again once the checkout is fixed
+            git -C "$repo" rev-parse HEAD > "$log_dir/update.fatal" 2>/dev/null || echo "$remote" > "$log_dir/update.fatal"
+            _log ERROR "FATAL: new version ${remote:0:7} failed the preflight and the rollback to ${old_head:0:7} FAILED - app NOT started, fix the checkout by hand (config/log/video untouched): $(echo "$preflight_out" | tr '\n' ' ')"
+            return 70
+        fi
+        return 0
+    fi
+    rm -f "$log_dir/update.rejected"
+    _log INFO "updated $branch ${old_head:0:7} -> ${remote:0:7} (preflight rc $preflight_rc)"
+    return 0
+}
+
+# The whole script is parsed before it runs: an update may replace this very file.
+main "$@"; exit $?

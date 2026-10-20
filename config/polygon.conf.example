@@ -1,0 +1,160 @@
+[SITE]
+	# SITE-CONFIG-01: identita pracoviste - titulek okna, hlavicka a paticka
+	# protokolu, hlavicka Knihy provozu, e-mailovy report. Sekce je POVINNA.
+	# Nazev pracoviste (povinne)
+	name = Polygon
+	# Organizace provozovatele (povinne); dalsi radky odsadit vic nez klic
+	organization = Organizace provozovatele
+	# Adresa v hlavicce protokolu (volitelne, smi byt prazdna)
+	address = Ulice 1, 000 00 Město
+	# Misto v paticce protokolu "<misto>, <datum>" (povinne)
+	place = Město
+	# Volitelne: vlastni logo protokolu - lokalni soubor mimo Git (absolutni
+	# cesta, nebo relativne ke koreni instalace). Bez nej se pouzije
+	# files/znak-hzs.png (ve verejne distribuci neutralni logo Polygon).
+	# logo = /usr/local/share/polygon/logo.png
+
+[LDAP]
+	host = ldaps://domena.example.cz
+	username = svc_polygon@domena.example.cz
+	password = HESLO
+	base = OU=Users,OU=Training,DC=domena,DC=example,DC=cz
+	group = CN=G_Polygon,OU=Groups,DC=domena,DC=example,DC=cz
+
+[MYSQL]
+	database = polygon
+	host = 192.0.2.100
+	user = polygon
+	password = HESLO
+
+[QUIDO]
+	# IP adresa QUIDO modulu pro digitalni vstupy (QUIDO_IN)
+	din = 192.0.2.231
+	# IP adresa QUIDO modulu pro digitalni vystupy (QUIDO_OUT)
+	dout = 192.0.2.232
+
+[DEV]
+	# True = pouzit simulovane QUIDO (Mock) misto fyzickeho hardware, vhodne
+	# pro vyvoj bez pristupu k realnym QUIDO modulum. Default False.
+	mock_quido = false
+	# True = preskocit prihlaseni (LDAP) - jen pro domaci testovani GUI bez
+	# LDAP/AD. Plati POUZE spolu s mock_quido = true, jinak se ignoruje a
+	# pouzije se normalni LDAP prihlaseni. GUI pak ukazuje
+	# "DEV MODE - PRIHLASENI VYPNUTO". V produkci nikdy. Default False.
+	skip_login = false
+	# True = povolit simulovane kamery pro domaci vyvoj bez RTSP kamer:
+	# v [CAMERA] pak lze zadat camN = mock://online, mock://nosignal,
+	# mock://flaky?up=60&down=30 nebo mock://slow?read_ms=500
+	# (viz app/mock_camera.py). Bez teto volby se mock:// ignoruje.
+	# V produkci nikdy. Default False.
+	mock_camera = false
+
+[AUDIO]
+	# Zvukovy efekt (tlacitko Zvukove efekty). Verejna distribuce zadny zvukovy
+	# soubor neobsahuje: provozovatel muze dodat vlastni lokalni zvukovy WAV soubor
+	# a nastavit jeho cestu zde (absolutni, nebo relativne k app/), potom
+	# disable = false. Dokud vlastni zvuk neni, nechte disable = true.
+	file = /usr/local/share/polygon/zvuk.wav
+	# True = zvuk je vypnuty, False = zvuk je zapnuty
+	disable = true
+
+[PROTOCOL]
+	# True = tisk protokolu je vypnuty, False = zapnuty (volitelne, default False)
+	# Tisk vyzaduje PyQt5.QtWebKitWidgets, ktery na novejsich distribucich/PyPI wheelech chybi.
+	disable = False
+
+[QUIDO_IN]
+	# Mapovani patrovych cidel na cislo vstupu QUIDO
+	# Nazev musi odpovidat nazvu segmentu mapy (floor_01 ... floor_59)
+	floor_01 = 0
+	floor_02 = 1
+	floor_03 = 2
+	floor_04 = 3
+	floor_05 = 4
+	floor_06 = 5
+	floor_07 = 6
+	floor_08 = 7
+	floor_09 = 8
+	floor_10 = 9
+
+[QUIDO_OUT]
+	# Mapovani tlacitku na cislo releoveho vystupu QUIDO
+	# Nazev musi odpovidat objectName tlacitka v UI (bez suffixu "Button")
+	fan12 = 1
+	fan34 = 2
+	smoke = 3
+	glow = 4
+	strobo = 5
+	hotZone = 6
+	infraLight = 7
+	fanControlRoom = 8
+	polygonLight1 = 9
+	polygonLight2 = 10
+	polygonLight3 = 11
+	hotZoneLight = 12
+	stressRoomLight = 13
+	controlRoomLight = 14
+	louver = 15
+	helpLight = 16
+
+[EMERGENCY]
+	# Nouzovy rezim (EMERGENCY-01) musi zaluzie otevrit.
+	# Hodnota = stav rele QUIDO_OUT louver, ktery znamena OTEVRENO: on | off.
+	# Pro MOCK/DEV je nouzovy stav nastaven na OFF. Fyzicka polarita rele
+	# zaluzie NENI overena - pred produkcnim nasazenim ji over na skutecnem
+	# QUIDO a teprve pak hodnotu potvrd v produkcnim configu.
+	# Bez platne hodnoty nouze zaluzii nenastavi a v GUI hlasi
+	# "Nenastaveno: Zatemneni zaluzie" - zadny skryty vychozi stav.
+	louver_open_relay = off
+
+[REPORT_EMAIL]
+	# REPORT-01: provozni report Knihy provozu e-mailem pri korektnim
+	# ukonceni programu (zavreni okna a potvrzeni ANO). Odesle se jen pri
+	# zmene od posledniho uspesne odeslaneho reportu (novy, vyreseny nebo
+	# stornovany zaznam); priloha = PDF zmen + vsech otevrenych zaznamu.
+	# Stav posledniho reportu: ~/.local/state/polygon/report_email.json.
+	# Cela sekce je volitelna. Default false.
+	enabled = false
+	# True = odesilat i v DEV rezimu ([DEV] mock_quido/skip_login), predmet
+	# pak vzdy obsahuje [DEV]. Default false = v DEV se nic neodesila.
+	allow_dev = false
+	smtp_host = smtp.example.cz
+	# prazdne = podle security (starttls 587, ssl 465, none 25)
+	smtp_port = 587
+	# starttls | ssl | none
+	security = starttls
+	# prazdne = bez prihlaseni (interni relay)
+	username =
+	# skutecne heslo jen v lokalnim polygon.conf (gitignored), nikdy v repu
+	password = HESLO
+	from = polygon@example.cz
+	# vice adres oddelit carkou
+	to = provoz@example.cz
+	# timeout SMTP v sekundach (jeden pokus, bez opakovani)
+	timeout = 10
+	# prefix predmetu [..]; prazdne = [SITE] name
+	subject_prefix =
+
+[CAMERA]
+	# True = kamery jsou vypnute, False = kamery jsou zapnute
+	disable = False
+	# Rozliseni jednoho kameroveho nahledu v pixelech
+	width = 475
+	height = 356
+	# Zobrazeni okna kamer (volitelne, default windowed):
+	#   windowed             = bezne okno (puvodni chovani)
+	#   secondary_fullscreen = pres celou obrazovku na druhem (neprimarnim)
+	#                          monitoru; s jednim monitorem bezne okno
+	display_mode = windowed
+	# Snimku za sekundu v nahravce kamer (volitelne, 1-30, default 10).
+	# Delka videa odpovida skutecnemu casu nezavisle na rychlosti nahledu.
+	recording_fps = 10
+	# Volitelne: vychozi prihlasovaci udaje pro kamery
+	user = admin
+	password = HESLO
+	# RTSP streamy kamer (cam1 az cam11)
+	cam1 = rtsp://admin:HESLO@192.0.2.20/Streaming/Channels/2
+	cam2 = rtsp://admin:HESLO@192.0.2.21/Streaming/Channels/2
+#	cam3 = rtsp://admin:HESLO@192.0.2.22/Streaming/Channels/2
+#	cam4 = rtsp://admin:HESLO@192.0.2.23/Streaming/Channels/2
+

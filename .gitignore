@@ -1,0 +1,13 @@
+# Local configuration of this PC (contains passwords) - never in the repository
+config/polygon.conf
+config/*.conf
+.env
+
+# Runtime data
+log/
+video/
+*.log
+
+# Python
+__pycache__/
+*.pyc

@@ -1,0 +1,15 @@
+#!/bin/bash
+# DEPLOY-01: read-only runtime preflight (system Python modules, QMYSQL, config).
+# Never touches the DB, LDAP, QUIDO, cameras or any hardware.
+# Exit code: 0 = PASS, 1 = PASS with warnings, 2 = HARD FAIL.
+# Usage: bin/polygon-preflight [--quiet] [--config PATH]
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON="${POLYGON_PYTHON:-/usr/bin/python3}"   # override only for tests
+
+if [ ! -x "$PYTHON" ]; then
+    echo "HARD FAIL $PYTHON – neexistuje (sudo apt install python3)"
+    echo "PREFLIGHT: HARD FAIL"
+    exit 2
+fi
+exec "$PYTHON" "$SCRIPT_DIR/../deploy/preflight.py" "$@"

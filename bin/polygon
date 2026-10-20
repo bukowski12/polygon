@@ -1,0 +1,7 @@
+#!/bin/bash
+# Polygon launcher: system Python + APT PyQt5 (QMYSQL driver), never a venv.
+# Works from any working directory; arguments are passed through.
+set -e
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec /usr/bin/python3 "$SCRIPT_DIR/../app/main.py" "$@"

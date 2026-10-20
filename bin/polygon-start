@@ -1,0 +1,37 @@
+#!/bin/bash
+# DEPLOY-01: production launcher - safe update (bin/polygon-update), then the
+# app (bin/polygon). A missing network or a failed update never stops the
+# start: the installed version runs.
+#
+#   bin/polygon-start              update + start
+#   bin/polygon-start --no-update  start without the update
+#   bin/polygon-start --dev        any other argument goes to the app
+#
+# Developers keep using bin/polygon directly (never updates).
+# Exit 70 (app not started): bin/polygon-update reported FATAL - a new version
+# failed the preflight and could not be rolled back. Any other updater result
+# (no network, no update, rolled back) starts the installed version.
+
+main() {
+    local script_dir update=1 args=() arg
+    script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    for arg in "$@"; do
+        if [ "$arg" = "--no-update" ]; then
+            update=0
+        else
+            args+=("$arg")
+        fi
+    done
+    if [ "$update" = 1 ]; then
+        "$script_dir/polygon-update"
+        local rc=$?
+        if [ "$rc" = 70 ]; then  # FATAL: a version known to fail the preflight - never start it
+            echo "polygon-start: FATAL - Polygon NOT started, see log/update.log" >&2
+            return 70
+        fi
+    fi
+    exec "$script_dir/polygon" "${args[@]}"
+}
+
+# The whole script is parsed before it runs: the update may replace this very file.
+main "$@"; exit $?
